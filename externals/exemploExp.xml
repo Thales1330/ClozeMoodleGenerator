@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+<!-- question: 0  -->
+  <question type="category">
+    <category>
+      <text>$course$/top/CAT_TESTE</text>
+    </category>
+    <info format="html">
+      <text></text>
+    </info>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 360868  -->
+  <question type="cloze">
+    <name>
+      <text>Q1</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Quanto é A + B?<br>{1:NUMERICAL:=3}<br>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+  </question>
+
+<!-- question: 360870  -->
+  <question type="cloze">
+    <name>
+      <text>Q2</text>
+    </name>
+    <questiontext format="html">
+      <text><![CDATA[Quanto é C + D?<br>{1:NUMERICAL:=4}<br>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text></text>
+    </generalfeedback>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber></idnumber>
+  </question>
+
+</quiz>
