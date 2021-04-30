@@ -441,4 +441,24 @@ void MainFrame::OnExportClick(wxCommandEvent& event)
 
 void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path, wxString filename)
 {
+    std::ofstream writeQuizFile(path.mb_str());
+    writeQuizFile.close();
+
+    rapidxml::xml_document<> doc;
+    rapidxml::file<> xmlFile(path);
+    doc.parse<0>(xmlFile.data());
+    
+    rapidxml::xml_node<>* decl = doc.allocate_node(rapidxml::node_declaration);
+    rapidxml::xml_attribute<>* ver = doc.allocate_attribute("version", "1.0");
+    rapidxml::xml_attribute<>* encoding = doc.allocate_attribute("encoding", "utf-8");
+    decl->append_attribute(ver);
+    decl->append_attribute(encoding);
+    doc.append_node(decl);
+    
+    rapidxml::xml_node<>* rootNode = doc.allocate_node(rapidxml::node_element, "quiz");
+    doc.append_node(rootNode);
+
+    rapidxml::xml_node<>* processNameNode = XMLParser::AppendNode(doc, rootNode, "question");
+    XMLParser::SetNodeAttribute(doc, processNameNode, "type", "category");
+    //XMLParser::SetNodeValue(doc, processNameNode, fileName);
 }

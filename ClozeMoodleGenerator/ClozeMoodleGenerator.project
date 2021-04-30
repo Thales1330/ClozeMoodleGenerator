@@ -79,15 +79,17 @@
         <SearchPaths/>
       </Completion>
     </Configuration>
-    <Configuration Name="Release" CompilerType="MinGW ( TDM-GCC-32 )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
+    <Configuration Name="Release" CompilerType="MinGW ( C:\TDM-GCC-32\bin\ )" DebuggerType="GNU gdb debugger" Type="Executable" BuildCmpWithGlobalSettings="append" BuildLnkWithGlobalSettings="append" BuildResWithGlobalSettings="append">
       <Compiler Options="-O2;-std=gnu++17;-Wall;$(shell wx-config --cflags)" C_Options="-O2;-Wall" Assembler="" Required="yes" PreCompiledHeader="" PCHInCommandLine="no" PCHFlags="" PCHFlagsPolicy="0">
         <IncludePath Value="."/>
         <IncludePath Value="C:\Users\Pichau\AppData\Local\Programs\Python\Python39-32\include"/>
+        <IncludePath Value="C:\Users\thale\AppData\Local\Programs\Python\Python39-32\include"/>
         <Preprocessor Value="NDEBUG"/>
         <Preprocessor Value="UNICODE"/>
       </Compiler>
       <Linker Options="$(shell wx-config --libs std,stc,webview);-static;-limm32" Required="yes">
         <LibraryPath Value="C:\Users\Pichau\AppData\Local\Programs\Python\Python39-32\libs"/>
+        <LibraryPath Value="C:\Users\thale\AppData\Local\Programs\Python\Python39-32\libs"/>
         <Library Value="python39"/>
       </Linker>
       <ResourceCompiler Options="$(shell wx-config --rcflags)" Required="no"/>

@@ -4,8 +4,9 @@
 -IC:\TDM-GCC-32\lib\gcc\mingw32\9.2.0\include
 -IC:\TDM-GCC-32\include
 -IC:\TDM-GCC-32\lib\gcc\mingw32\9.2.0\include-fixed
--IC:\Users\Pichau\Documents\GitHub\ClozeMoodleGenerator\ClozeMoodleGenerator
+-IC:\Users\thale\Documents\GitHub\ClozeMoodleGenerator\ClozeMoodleGenerator
 -IC:\Users\Pichau\AppData\Local\Programs\Python\Python39-32\include
+-IC:\Users\thale\AppData\Local\Programs\Python\Python39-32\include
 -IC:\wxWidgets-3.1.5\lib\gcc_lib\mswu
 -IC:\wxWidgets-3.1.5\include
 -D_UNICODE
