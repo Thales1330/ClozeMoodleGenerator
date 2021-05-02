@@ -1,25 +1,21 @@
 #include "MainFrame.h"
 #include "STDCapture.h"
+#include <random>
 #include <sstream>
 #include <vector>
 #include <wx/aboutdlg.h>
-#include <wx/ffile.h>
-#include <wx/fs_mem.h>
+#include <wx/filedlg.h>
 #include <wx/msgdlg.h>
-#include <wx/sharedptr.h>
-#include <wx/stdpaths.h>
 #include <wx/webviewfshandler.h>
 
 #include "ExportClose.h"
 #include "HTMLPreview.h"
 #include "XMLParser.h"
 
-// namespace py = pybind11;
-// using namespace py::literals;
-
 MainFrame::MainFrame(wxWindow* parent)
     : MainFrameBaseClass(parent)
 {
+    m_rndGenerator.seed(time(0));
     SetTitle(wxT("Gerador de questões"));
     SetSize(GetBestSize());
 
@@ -72,11 +68,12 @@ MainFrame::MainFrame(wxWindow* parent)
 
     auto style = m_richTextCtrlConsole->GetBasicStyle();
     style.SetTextColour(*wxWHITE);
+    style.SetBackgroundColour(m_dfltConsoleBackColour);
     m_richTextCtrlConsole->SetBasicStyle(style);
 
     m_gridInputs->SetDefaultColSize(200);
-    m_gridInputs->SetDefaultCellFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-    m_gridInputs->SetLabelFont(wxFont(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    m_gridInputs->SetDefaultCellFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    m_gridInputs->SetLabelFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
     m_gridInputs->AppendCols(5);
     m_gridInputs->SetColLabelValue(0, wxT("Nome"));
     m_gridInputs->SetColLabelValue(1, wxT("Inicial"));
@@ -93,10 +90,13 @@ MainFrame::MainFrame(wxWindow* parent)
     m_gridInputs->AutoSize();
     m_gridInputs->Layout();
     m_mainPanel->Layout();
+    
+    Py_Initialize();
 }
 
 MainFrame::~MainFrame()
 {
+    Py_FinalizeEx();
 }
 
 void MainFrame::OnExit(wxCommandEvent& event)
@@ -118,50 +118,29 @@ void MainFrame::OnAbout(wxCommandEvent& event)
 }
 void MainFrame::OnIntClick(wxCommandEvent& event)
 {
-    for(auto& tag : m_ioTagList) {
-        if(tag.type == IOTagType::output) {
-            wxString str = tag.name;
-            wxString partialStr, afterF = "";
-            std::vector<wxString> inputs;
-
-            while((partialStr = str.BeforeFirst(' ', &afterF)) != "") {
-                inputs.push_back(partialStr);
-                str = afterF;
-            }
-
-            // Fill inputs with std values
-            bool first = true;
-            for(auto& in : inputs) {
-                if(!first) {
-                    for(auto tagTable : m_ioTagTable) {
-                        if(in == tagTable.name) {
-                            in = wxString::FromCDouble(tagTable.stdValue);
-                        }
-                    }
-                } else {
-                    first = false;
-                }
-            }
-
-            std::vector<wxString> errors;
-            double response = 0.0;
-            RunPythonScript(inputs, m_stcPython->GetText().c_str(), response, errors);
-
-            for(auto error : errors)
-                SendToConsole(error);
-
-            SendToConsole(inputs[0] + " = " + wxString::FromCDouble(response));
-            tag.result = response;
-        }
+    if(CalculateOutputs(false)) {
+        SendToConsole(wxT("Script interpretado com sucesso! Clique em 'Preview' para visualizar as respostas padrões."),
+            *wxGREEN);
+    } else {
+        SendToConsole(wxT("Script com erro(s). Não foi possível calcular todas as saídas."), wxColour(252, 143, 0));
     }
 }
 
-void MainFrame::SendToConsole(wxString str)
+void MainFrame::SendToConsole(wxString str, wxColour backColour)
 {
+    int pos = m_richTextCtrlConsole->GetCaretPosition();
     if(str != "") {
         m_richTextCtrlConsole->AppendText(">> " + str + "\n");
         m_richTextCtrlConsole->MoveEnd();
         m_richTextCtrlConsole->ShowPosition(m_richTextCtrlConsole->GetCaretPosition());
+    }
+    if(backColour != m_dfltConsoleBackColour) {
+        wxRichTextRange range(pos + 4, m_richTextCtrlConsole->GetCaretPosition());
+        wxRichTextAttr attr;
+        m_richTextCtrlConsole->GetStyleForRange(range, attr);
+        attr.SetTextColour(backColour);
+        attr.SetFontWeight(wxFONTWEIGHT_BOLD);
+        m_richTextCtrlConsole->SetStyle(range, attr);
     }
 }
 
@@ -176,7 +155,6 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
     STDCapture captureErrorMsg;
     captureErrorMsg.BeginCapture();
 
-    Py_Initialize();
 
     PyObject* pCompiledFn = Py_CompileString(script, "", Py_file_input);
     pModule = PyImport_ExecCodeModule("strScript", pCompiledFn);
@@ -238,11 +216,11 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
         errors.emplace_back(captureErrorMsg.GetCapture());
         return;
     }
-    if(Py_FinalizeEx() < 0) {
-        captureErrorMsg.EndCapture();
-        errors.emplace_back(captureErrorMsg.GetCapture());
-        return;
-    }
+    //if(Py_FinalizeEx() < 0) {
+    //    captureErrorMsg.EndCapture();
+    //    errors.emplace_back(captureErrorMsg.GetCapture());
+    //    return;
+    //}
 
     captureErrorMsg.EndCapture();
     errors.emplace_back(captureErrorMsg.GetCapture());
@@ -316,7 +294,7 @@ void MainFrame::OnPreviewClick(wxCommandEvent& event)
         if(tag.type == IOTagType::input) {
             htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue));
         } else {
-            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.result));
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value));
         }
     }
 
@@ -333,9 +311,9 @@ void MainFrame::OnIndicatorClick(wxStyledTextEvent& event)
             tagClick = tag;
     }
     SendToConsole(
-        wxString::Format("%s, %s, pos = (%d, %d), init = %f, end = %f, std = %f, dp = %d, res = %f", tagClick.name,
+        wxString::Format("%s, %s, pos = (%d, %d), init = %f, end = %f, std = %f, dp = %d, value = %f", tagClick.name,
             tagClick.type == IOTagType::input ? "in" : "out", tagClick.position.first, tagClick.position.second,
-            tagClick.start, tagClick.end, tagClick.stdValue, tagClick.decimalPlaces, tagClick.result));
+            tagClick.start, tagClick.end, tagClick.stdValue, tagClick.decimalPlaces, tagClick.value));
 
     for(int i = 0; i < m_gridInputs->GetNumberRows(); ++i) {
         if(tagClick.name == m_gridInputs->GetCellValue(i, 0)) {
@@ -433,13 +411,13 @@ void MainFrame::OnExportClick(wxCommandEvent& event)
 {
     ExportClose expDlg(this);
     if(expDlg.ShowModal() == wxID_OK) {
-        ExportXMLToFile(expDlg.m_numQuiz, expDlg.m_catName, expDlg.m_path, expDlg.m_filename);
+        ExportXMLToFile(expDlg.m_numQuiz, expDlg.m_catName, expDlg.m_path);
     }
 
     event.Skip();
 }
 
-void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path, wxString filename)
+void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path)
 {
     std::ofstream writeQuizFile(path.mb_str());
     writeQuizFile.close();
@@ -447,18 +425,318 @@ void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path, wx
     rapidxml::xml_document<> doc;
     rapidxml::file<> xmlFile(path);
     doc.parse<0>(xmlFile.data());
-    
+
     rapidxml::xml_node<>* decl = doc.allocate_node(rapidxml::node_declaration);
     rapidxml::xml_attribute<>* ver = doc.allocate_attribute("version", "1.0");
-    rapidxml::xml_attribute<>* encoding = doc.allocate_attribute("encoding", "utf-8");
+    rapidxml::xml_attribute<>* encoding = doc.allocate_attribute("encoding", "UTF-8");
     decl->append_attribute(ver);
     decl->append_attribute(encoding);
     doc.append_node(decl);
-    
+
     rapidxml::xml_node<>* rootNode = doc.allocate_node(rapidxml::node_element, "quiz");
     doc.append_node(rootNode);
 
-    rapidxml::xml_node<>* processNameNode = XMLParser::AppendNode(doc, rootNode, "question");
-    XMLParser::SetNodeAttribute(doc, processNameNode, "type", "category");
-    //XMLParser::SetNodeValue(doc, processNameNode, fileName);
+    rapidxml::xml_node<>* questionCatNode = XMLParser::AppendNode(doc, rootNode, "question");
+    XMLParser::SetNodeAttribute(doc, questionCatNode, "type", "category");
+    rapidxml::xml_node<>* categoryCatNode = XMLParser::AppendNode(doc, questionCatNode, "category");
+    rapidxml::xml_node<>* textCatNode = XMLParser::AppendNode(doc, categoryCatNode, "text");
+    XMLParser::SetNodeValue(doc, textCatNode, "$course$/top/" + catName);
+    rapidxml::xml_node<>* infoNode = XMLParser::AppendNode(doc, questionCatNode, "info");
+    XMLParser::SetNodeAttribute(doc, infoNode, "format", "html");
+    rapidxml::xml_node<>* textInfoNode = XMLParser::AppendNode(doc, infoNode, "text");
+    rapidxml::xml_node<>* idCatNumberNode = XMLParser::AppendNode(doc, questionCatNode, "idnumber");
+
+    for(int i = 0; i < numQuiz; ++i) {
+        rapidxml::xml_node<>* questionClozeNode = XMLParser::AppendNode(doc, rootNode, "question");
+        XMLParser::SetNodeAttribute(doc, questionClozeNode, "type", "cloze");
+        rapidxml::xml_node<>* nameCloze = XMLParser::AppendNode(doc, questionClozeNode, "name");
+        rapidxml::xml_node<>* textCloze = XMLParser::AppendNode(doc, nameCloze, "text");
+        XMLParser::SetNodeValue(doc, textCloze, wxString::Format("Q%d", i));
+        rapidxml::xml_node<>* questionTextNode = XMLParser::AppendNode(doc, questionClozeNode, "questiontext");
+        XMLParser::SetNodeAttribute(doc, questionTextNode, "format", "html");
+        rapidxml::xml_node<>* questionTextCloze = XMLParser::AppendNode(doc, questionTextNode, "text");
+
+        // Generate new cloze
+        GenerateNewRandomInputValues();
+        CalculateOutputs();
+        wxString clozeHTLM = "<![CDATA[" + GetHTMLFromCurrentIOs() + "]]>";
+
+        XMLParser::SetNodeValue(doc, questionTextCloze, clozeHTLM.c_str());
+
+        rapidxml::xml_node<>* feedbackNode = XMLParser::AppendNode(doc, questionClozeNode, "generalfeedback");
+        XMLParser::SetNodeAttribute(doc, feedbackNode, "format", "html");
+        rapidxml::xml_node<>* feedbackTextCloze = XMLParser::AppendNode(doc, feedbackNode, "text");
+        rapidxml::xml_node<>* penaltyNode = XMLParser::AppendNode(doc, questionClozeNode, "penalty");
+        XMLParser::SetNodeValue(doc, penaltyNode, "0.3333333");
+        rapidxml::xml_node<>* hiddenNode = XMLParser::AppendNode(doc, questionClozeNode, "hidden");
+        XMLParser::SetNodeValue(doc, hiddenNode, "0");
+        rapidxml::xml_node<>* idNumberNode = XMLParser::AppendNode(doc, questionClozeNode, "idnumber");
+    }
+
+    std::ofstream writeXML(path.mb_str());
+    writeXML << doc;
+    writeXML.close();
+
+    // Open the new file and replace escape characters
+    wxTextFile xmlFileAgain(path);
+    xmlFileAgain.Open();
+
+    wxString fileStr = "";
+    for(auto str = xmlFileAgain.GetFirstLine(); !xmlFileAgain.Eof(); str = xmlFileAgain.GetNextLine()) {
+        str.Replace("&lt;", "<");
+        str.Replace("&gt;", ">");
+        str.Replace("&quot;", "\"");
+        str.Replace("&apos;", "\'");
+        str.Replace("&amp;", "&");
+        str.Replace("&nbsp;", " ");
+
+        fileStr += str + "\n";
+    }
+    // do something with the last line in str
+    xmlFileAgain.Clear();
+    xmlFileAgain.AddLine(fileStr);
+    xmlFileAgain.Write();
+
+    xmlFileAgain.Close();
+}
+
+double MainFrame::GetRandom(double init, double end)
+{
+    std::uniform_real_distribution<> distribution(init, end);
+    return distribution(m_rndGenerator);
+}
+
+void MainFrame::GenerateNewRandomInputValues()
+{
+    for(auto& tagTable : m_ioTagTable)
+        tagTable.value = GetRandom(tagTable.start, tagTable.end);
+
+    // Update main list
+    for(auto& currentTag : m_ioTagList) {
+        if(currentTag.type == IOTagType::input) {
+            for(auto tableTag : m_ioTagTable) {
+                if(currentTag.name == tableTag.name) {
+                    currentTag.value = tableTag.value;
+                }
+            }
+        }
+    }
+
+    // Set random values
+    for(auto& tag : m_ioTagList) {
+        tag.value = GetRandom(tag.start, tag.end);
+    }
+}
+
+bool MainFrame::CalculateOutputs(bool useInputValue)
+{
+    bool noError = true;
+    for(auto& tag : m_ioTagList) {
+        if(tag.type == IOTagType::output) {
+            wxString str = tag.name;
+            wxString partialStr, afterF = "";
+            std::vector<wxString> inputs;
+
+            while((partialStr = str.BeforeFirst(' ', &afterF)) != "") {
+                inputs.push_back(partialStr);
+                str = afterF;
+            }
+
+            // Fill inputs with std values
+            bool first = true;
+            for(auto& in : inputs) {
+                if(!first) {
+                    for(auto tagTable : m_ioTagTable) {
+                        if(in == tagTable.name) {
+                            if(useInputValue)
+                                in = wxString::FromCDouble(tagTable.value);
+                            else
+                                in = wxString::FromCDouble(tagTable.stdValue);
+                            // SendToConsole(wxString::FromCDouble(GetRandom(tagTable.start, tagTable.end),
+                            // tagTable.decimalPlaces));
+                        }
+                    }
+                } else {
+                    first = false;
+                }
+            }
+
+            std::vector<wxString> errors;
+            double response = 0.0;
+            RunPythonScript(inputs, m_stcPython->GetText().c_str(), response, errors);
+
+            for(auto error : errors) {
+                if(error != "") {
+                    SendToConsole(error);
+                    noError = false;
+                }
+            }
+            // SendToConsole(inputs[0] + " = " + wxString::FromCDouble(response));
+            tag.value = response;
+        }
+    }
+    return noError;
+}
+
+wxString MainFrame::GetHTMLFromCurrentIOs()
+{
+    wxString htmlCode = m_stcHTML->GetValue();
+
+    // Set inputs and outputs in html
+    for(auto tag : m_ioTagList) {
+        wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
+        wxString strToReplace = "[[" + ioStr + tag.name + "]]";
+        if(tag.type == IOTagType::input)
+            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value, tag.decimalPlaces));
+        else
+            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
+    }
+    htmlCode.Replace("\n", "");
+
+    return htmlCode;
+}
+void MainFrame::OnOpenClick(wxCommandEvent& event)
+{
+    wxFileDialog openFileDialog(
+        this, wxT("Abrir arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if(openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxTextFile file(openFileDialog.GetPath());
+    OpenFile(file);
+}
+void MainFrame::OnSaveAsClick(wxCommandEvent& event)
+{
+
+    wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if(saveFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+    m_filePath = saveFileDialog.GetPath();
+
+    wxString saveStr = GetStrSave();
+
+    wxTextFile file(m_filePath);
+    file.AddLine(saveStr);
+    file.Write();
+    file.Close();
+}
+
+void MainFrame::OnSaveClick(wxCommandEvent& event)
+{
+    if(m_filePath == "") {
+        wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
+            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+        if(saveFileDialog.ShowModal() == wxID_CANCEL)
+            return;
+        m_filePath = saveFileDialog.GetPath();
+    }
+
+    wxString saveStr = GetStrSave();
+
+    wxTextFile file(m_filePath);
+    file.AddLine(saveStr);
+    file.Write();
+    file.Close();
+}
+
+wxString MainFrame::GetStrSave()
+{
+    wxString strSave = "";
+    strSave += "init html\n" + m_stcHTML->GetValue() + "\nend html\n";
+    strSave += "init py\n" + m_stcPython->GetValue() + "\nend py\n";
+    strSave += "init io\n";
+    for(auto tag : m_ioTagList) {
+        strSave += wxString::Format("%d;", tag.type);
+        strSave += tag.name + ";";
+        strSave += wxString::FromCDouble(tag.start) + ";";
+        strSave += wxString::FromCDouble(tag.end) + ";";
+        strSave += wxString::FromCDouble(tag.stdValue) + ";";
+        strSave += wxString::Format("%d;", tag.decimalPlaces);
+        strSave += wxString::Format("%d;%d;\n", tag.position.first, tag.position.second);
+    }
+    strSave += "end io\n";
+
+    return strSave;
+}
+
+void MainFrame::OpenFile(wxTextFile& file)
+{
+    file.Open();
+    
+    m_ioTagList.clear();
+    m_ioTagTable.clear();
+
+    wxString htmlStr = "";
+    wxString pyStr = "";
+    for(auto str = file.GetFirstLine(); !file.Eof(); str = file.GetNextLine()) {
+        if(str == "init html") {
+            str = file.GetNextLine();
+            while(str != "end html") {
+                htmlStr += str + "\n";
+                str = file.GetNextLine();
+            }
+            htmlStr.Remove(htmlStr.size() - 1);
+        }
+        if(str == "init py") {
+            str = file.GetNextLine();
+            while(str != "end py") {
+                pyStr += str + "\n";
+                str = file.GetNextLine();
+            }
+            pyStr.Remove(pyStr.size() - 1);
+        }
+        if(str == "init io") {
+            str = file.GetNextLine();
+            while(str != "end io") {
+                std::vector<wxString> ioStrs;
+                wxString ioValueStr = "";
+                for(auto ch : str) {
+                    if(ch == ';') {
+                        ioStrs.push_back(ioValueStr);
+                        ioValueStr = "";
+                    } else {
+                        ioValueStr += ch;
+                    }
+                }
+                IOTag newTag;
+                
+                long typeID, decimalPlaces, startPos, endPos;
+                double start, end, stdValue;
+                
+                ioStrs[0].ToLong(&typeID);
+                ioStrs[2].ToDouble(&start);
+                ioStrs[3].ToDouble(&end);
+                ioStrs[4].ToDouble(&stdValue);
+                ioStrs[5].ToLong(&decimalPlaces);
+                ioStrs[6].ToLong(&startPos);
+                ioStrs[7].ToLong(&endPos);
+                
+                newTag.type = static_cast<IOTagType>(typeID);
+                newTag.name = ioStrs[1];
+                newTag.start = start;
+                newTag.end = end;
+                newTag.stdValue = stdValue;
+                newTag.decimalPlaces = decimalPlaces;
+                newTag.position = std::make_pair<int>(startPos, endPos);
+                
+                m_ioTagList.push_back(newTag);
+                
+                str = file.GetNextLine();
+            }
+        }
+    }
+    // do something with the last line in str
+    
+    m_stcHTML->ClearAll();
+    m_stcHTML->SetValue(htmlStr);
+    
+    m_stcPython->ClearAll();
+    m_stcPython->SetValue(pyStr);
+    
+    FillTable();
+    
+    m_filePath = file.GetName();
+
+    file.Close();
 }

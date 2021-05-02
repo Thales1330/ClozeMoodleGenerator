@@ -43,7 +43,6 @@ void ExportClose::OnExportClick(wxCommandEvent& event)
     if(saveFileDialog.ShowModal() == wxID_CANCEL) return;
 
     m_path = saveFileDialog.GetPath();
-    m_filename = saveFileDialog.GetFilename();
     
     EndModal(wxID_OK);
 }

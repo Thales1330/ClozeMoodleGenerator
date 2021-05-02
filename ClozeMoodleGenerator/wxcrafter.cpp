@@ -176,17 +176,17 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_richTextCtrlConsole =
         new wxRichTextCtrl(m_mainPanel, wxID_ANY, wxT(""), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)),
             wxTE_READONLY | wxTE_MULTILINE | wxTE_PROCESS_TAB | wxTE_PROCESS_ENTER | wxWANTS_CHARS);
-    m_richTextCtrlConsole->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT));
+    m_richTextCtrlConsole->SetBackgroundColour(wxColour(wxT("rgb(0,120,215)")));
     m_richTextCtrlConsole->SetForegroundColour(wxColour(wxT("rgb(255,255,255)")));
     wxFont m_richTextCtrlConsoleFont(
-        12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD, false, wxT("Courier New"));
+        12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Courier New"));
     m_richTextCtrlConsole->SetFont(m_richTextCtrlConsoleFont);
 
     boxSizer_LVL2_1->Add(m_richTextCtrlConsole, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
     wxBoxSizer* boxSizer_LVL3_1 = new wxBoxSizer(wxHORIZONTAL);
 
-    boxSizer_LVL2_1->Add(boxSizer_LVL3_1, 0, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+    boxSizer_LVL2_1->Add(boxSizer_LVL3_1, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, WXC_FROM_DIP(5));
 
     m_buttonRunPy = new wxButton(
         m_mainPanel, wxID_ANY, _("Interpretar Script"), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
@@ -204,7 +204,8 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_buttonRunPreview->SetBitmapMargins(2, 2);
 #endif
 
-    boxSizer_LVL3_1->Add(m_buttonRunPreview, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, WXC_FROM_DIP(5));
+    boxSizer_LVL3_1->Add(
+        m_buttonRunPreview, 0, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, WXC_FROM_DIP(5));
 
     m_menuBar = new wxMenuBar(0);
     this->SetMenuBar(m_menuBar);
@@ -219,10 +220,10 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
         new wxMenuItem(m_nameFile, wxID_SAVEAS, _("Salvar Como...\tCtrl-Shift-S"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemSaveAs);
 
-    m_menuItemOpen = new wxMenuItem(m_nameFile, wxID_SAVEAS, _("Abrir\tCtrl-O"), wxT(""), wxITEM_NORMAL);
+    m_menuItemOpen = new wxMenuItem(m_nameFile, wxID_OPEN, _("Abrir\tCtrl-O"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemOpen);
 
-    m_menuItemExport = new wxMenuItem(m_nameFile, wxID_SAVE, _("Exportar\tCtrl-E"), wxT(""), wxITEM_NORMAL);
+    m_menuItemExport = new wxMenuItem(m_nameFile, wxID_CONVERT, _("Exportar\tCtrl-E"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemExport);
 
     m_menuItemExit = new wxMenuItem(m_nameFile, wxID_EXIT, _("Sair\tAlt-X"), _("Quit"), wxITEM_NORMAL);
@@ -238,7 +239,7 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_mainToolbar->SetToolBitmapSize(wxSize(16, 16));
 
     SetName(wxT("MainFrameBaseClass"));
-    SetMinClientSize(wxSize(800, 600));
+    SetMinClientSize(wxSize(1280, 720));
     SetSize(wxDLG_UNIT(this, wxSize(1280, 720)));
     if(GetSizer()) {
         GetSizer()->Fit(this);
@@ -267,6 +268,12 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnIntClick), NULL, this);
     m_buttonRunPreview->Connect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnPreviewClick), NULL, this);
+    this->Connect(m_menuItemSave->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnSaveClick), NULL, this);
+    this->Connect(m_menuItemSaveAs->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnSaveAsClick), NULL, this);
+    this->Connect(m_menuItemOpen->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnOpenClick), NULL, this);
     this->Connect(m_menuItemExport->GetId(), wxEVT_COMMAND_MENU_SELECTED,
         wxCommandEventHandler(MainFrameBaseClass::OnExportClick), NULL, this);
     this->Connect(m_menuItemExit->GetId(), wxEVT_COMMAND_MENU_SELECTED,
@@ -289,6 +296,12 @@ MainFrameBaseClass::~MainFrameBaseClass()
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnIntClick), NULL, this);
     m_buttonRunPreview->Disconnect(
         wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnPreviewClick), NULL, this);
+    this->Disconnect(m_menuItemSave->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnSaveClick), NULL, this);
+    this->Disconnect(m_menuItemSaveAs->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnSaveAsClick), NULL, this);
+    this->Disconnect(m_menuItemOpen->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnOpenClick), NULL, this);
     this->Disconnect(m_menuItemExport->GetId(), wxEVT_COMMAND_MENU_SELECTED,
         wxCommandEventHandler(MainFrameBaseClass::OnExportClick), NULL, this);
     this->Disconnect(m_menuItemExit->GetId(), wxEVT_COMMAND_MENU_SELECTED,

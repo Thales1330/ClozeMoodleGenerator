@@ -28,7 +28,7 @@
 				}, {
 					"type":	"string",
 					"m_label":	"Minimum Size:",
-					"m_value":	"800,600"
+					"m_value":	"1280,720"
 				}, {
 					"type":	"string",
 					"m_label":	"Name:",
@@ -796,7 +796,7 @@
 														}, {
 															"type":	"colour",
 															"m_label":	"Bg Colour:",
-															"colour":	"Highlight"
+															"colour":	"(0,120,215)"
 														}, {
 															"type":	"colour",
 															"m_label":	"Fg Colour:",
@@ -804,7 +804,7 @@
 														}, {
 															"type":	"font",
 															"m_label":	"Font:",
-															"m_value":	"12,normal, bold, modern, 0, Courier New"
+															"m_value":	"12,normal, normal, modern, 0, Courier New"
 														}, {
 															"type":	"bool",
 															"m_label":	"Hidden",
@@ -843,7 +843,7 @@
 													"gbSpan":	"1,1",
 													"gbPosition":	"0,0",
 													"m_styles":	[],
-													"m_sizerFlags":	["wxALL", "wxLEFT", "wxRIGHT", "wxTOP", "wxBOTTOM", "wxEXPAND"],
+													"m_sizerFlags":	["wxALL", "wxLEFT", "wxRIGHT", "wxTOP", "wxBOTTOM", "wxALIGN_CENTER_HORIZONTAL"],
 													"m_properties":	[{
 															"type":	"string",
 															"m_label":	"Minimum Size:",
@@ -965,7 +965,7 @@
 															"gbSpan":	"1,1",
 															"gbPosition":	"0,0",
 															"m_styles":	[],
-															"m_sizerFlags":	["wxALL", "wxLEFT", "wxRIGHT", "wxTOP", "wxBOTTOM", "wxALIGN_CENTER_HORIZONTAL"],
+															"m_sizerFlags":	["wxALL", "wxLEFT", "wxRIGHT", "wxTOP", "wxBOTTOM", "wxALIGN_CENTER_HORIZONTAL", "wxALIGN_CENTER_VERTICAL"],
 															"m_properties":	[{
 																	"type":	"winid",
 																	"m_label":	"ID:",
@@ -1184,7 +1184,14 @@
 											"m_label":	"Checked",
 											"m_value":	false
 										}],
-									"m_events":	[],
+									"m_events":	[{
+											"m_eventName":	"wxEVT_COMMAND_MENU_SELECTED",
+											"m_eventClass":	"wxCommandEvent",
+											"m_eventHandler":	"wxCommandEventHandler",
+											"m_functionNameAndSignature":	"OnSaveClick(wxCommandEvent& event)",
+											"m_description":	"Menu item has been clicked",
+											"m_noBody":	false
+										}],
 									"m_children":	[]
 								}, {
 									"m_type":	4459,
@@ -1228,7 +1235,14 @@
 											"m_label":	"Checked",
 											"m_value":	false
 										}],
-									"m_events":	[],
+									"m_events":	[{
+											"m_eventName":	"wxEVT_COMMAND_MENU_SELECTED",
+											"m_eventClass":	"wxCommandEvent",
+											"m_eventHandler":	"wxCommandEventHandler",
+											"m_functionNameAndSignature":	"OnSaveAsClick(wxCommandEvent& event)",
+											"m_description":	"Menu item has been clicked",
+											"m_noBody":	false
+										}],
 									"m_children":	[]
 								}, {
 									"m_type":	4459,
@@ -1241,7 +1255,7 @@
 									"m_properties":	[{
 											"type":	"winid",
 											"m_label":	"ID:",
-											"m_winid":	"wxID_SAVEAS"
+											"m_winid":	"wxID_OPEN"
 										}, {
 											"type":	"string",
 											"m_label":	"Name:",
@@ -1272,7 +1286,14 @@
 											"m_label":	"Checked",
 											"m_value":	false
 										}],
-									"m_events":	[],
+									"m_events":	[{
+											"m_eventName":	"wxEVT_COMMAND_MENU_SELECTED",
+											"m_eventClass":	"wxCommandEvent",
+											"m_eventHandler":	"wxCommandEventHandler",
+											"m_functionNameAndSignature":	"OnOpenClick(wxCommandEvent& event)",
+											"m_description":	"Menu item has been clicked",
+											"m_noBody":	false
+										}],
 									"m_children":	[]
 								}, {
 									"m_type":	4459,
@@ -1285,7 +1306,7 @@
 									"m_properties":	[{
 											"type":	"winid",
 											"m_label":	"ID:",
-											"m_winid":	"wxID_SAVE"
+											"m_winid":	"wxID_CONVERT"
 										}, {
 											"type":	"string",
 											"m_label":	"Name:",

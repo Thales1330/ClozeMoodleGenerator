@@ -6,15 +6,15 @@
 ProjectName            :=ClozeMoodleGenerator
 ConfigurationName      :=Release
 WorkspaceConfiguration := $(ConfigurationName)
-WorkspacePath          :=C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator
-ProjectPath            :=C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator
+WorkspacePath          :=C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator
+ProjectPath            :=C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator
 IntermediateDirectory  :=../build-$(ConfigurationName)/ClozeMoodleGenerator
 OutDir                 :=../build-$(ConfigurationName)/ClozeMoodleGenerator
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
-User                   :=thale
-Date                   :=30/04/2021
+User                   :=Pichau
+Date                   :=02/05/2021
 CodeLitePath           :="C:/Program Files/CodeLite"
 LinkerName             :=C:/TDM-GCC-32/bin/g++.exe
 SharedObjectLinkerName :=C:/TDM-GCC-32/bin/g++.exe -shared -fPIC
@@ -64,7 +64,7 @@ AS       := C:/TDM-GCC-32/bin/as.exe
 CodeLiteDir:=C:\Program Files\CodeLite
 WXWIN:=C:\wxWidgets-3.1.5
 WXCFG:=gcc_lib\mswu
-Objects0=../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/win_resources.rc$(ObjectSuffix) 
+Objects0=../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix) ../build-$(ConfigurationName)/ClozeMoodleGenerator/win_resources.rc$(ObjectSuffix) 
 
 
 
@@ -96,39 +96,15 @@ PreBuild:
 ## Objects
 ##
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(ObjectSuffix): wxcrafter.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/wxcrafter.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wxcrafter.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/wxcrafter.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wxcrafter.cpp$(ObjectSuffix) $(IncludePath)
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(DependSuffix): wxcrafter.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(DependSuffix) -MM wxcrafter.cpp
 
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(PreprocessSuffix): wxcrafter.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter.cpp$(PreprocessSuffix) wxcrafter.cpp
 
-../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix): XMLParser.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/XMLParser.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/XMLParser.cpp$(ObjectSuffix) $(IncludePath)
-../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix): XMLParser.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix) -MM XMLParser.cpp
-
-../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(PreprocessSuffix): XMLParser.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(PreprocessSuffix) XMLParser.cpp
-
-../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix): MainFrame.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/MainFrame.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/MainFrame.cpp$(ObjectSuffix) $(IncludePath)
-../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix): MainFrame.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix) -MM MainFrame.cpp
-
-../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(PreprocessSuffix): MainFrame.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(PreprocessSuffix) MainFrame.cpp
-
-../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix): wxcrafter_bitmaps.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wxcrafter_bitmaps.cpp$(ObjectSuffix) $(IncludePath)
-../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix): wxcrafter_bitmaps.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix) -MM wxcrafter_bitmaps.cpp
-
-../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(PreprocessSuffix): wxcrafter_bitmaps.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(PreprocessSuffix) wxcrafter_bitmaps.cpp
-
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(ObjectSuffix): ExportClose.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/ExportClose.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ExportClose.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/ExportClose.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/ExportClose.cpp$(ObjectSuffix) $(IncludePath)
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(DependSuffix): ExportClose.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(DependSuffix) -MM ExportClose.cpp
 
@@ -136,7 +112,7 @@ PreBuild:
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/ExportClose.cpp$(PreprocessSuffix) ExportClose.cpp
 
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(ObjectSuffix): HTMLPreview.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/HTMLPreview.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/HTMLPreview.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/HTMLPreview.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/HTMLPreview.cpp$(ObjectSuffix) $(IncludePath)
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(DependSuffix): HTMLPreview.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(DependSuffix) -MM HTMLPreview.cpp
 
@@ -144,15 +120,39 @@ PreBuild:
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/HTMLPreview.cpp$(PreprocessSuffix) HTMLPreview.cpp
 
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(ObjectSuffix): main.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/main.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IncludePath)
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(DependSuffix): main.cpp
 	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(DependSuffix) -MM main.cpp
 
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(PreprocessSuffix): main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/main.cpp$(PreprocessSuffix) main.cpp
 
+../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix): XMLParser.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/XMLParser.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/XMLParser.cpp$(ObjectSuffix) $(IncludePath)
+../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix): XMLParser.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(DependSuffix) -MM XMLParser.cpp
+
+../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(PreprocessSuffix): XMLParser.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/XMLParser.cpp$(PreprocessSuffix) XMLParser.cpp
+
+../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix): MainFrame.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/MainFrame.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/MainFrame.cpp$(ObjectSuffix) $(IncludePath)
+../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix): MainFrame.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(DependSuffix) -MM MainFrame.cpp
+
+../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(PreprocessSuffix): MainFrame.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/MainFrame.cpp$(PreprocessSuffix) MainFrame.cpp
+
+../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix): wxcrafter_bitmaps.cpp ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/wxcrafter_bitmaps.cpp$(ObjectSuffix) $(IncludePath)
+../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix): wxcrafter_bitmaps.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(ObjectSuffix) -MF../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(DependSuffix) -MM wxcrafter_bitmaps.cpp
+
+../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(PreprocessSuffix): wxcrafter_bitmaps.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) ../build-$(ConfigurationName)/ClozeMoodleGenerator/wxcrafter_bitmaps.cpp$(PreprocessSuffix) wxcrafter_bitmaps.cpp
+
 ../build-$(ConfigurationName)/ClozeMoodleGenerator/win_resources.rc$(ObjectSuffix): win_resources.rc
-	$(RcCompilerName) -i "C:/Users/thale/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/win_resources.rc" $(RcCmpOptions)   $(ObjectSwitch)$(IntermediateDirectory)/win_resources.rc$(ObjectSuffix) $(RcIncludePath)
+	$(RcCompilerName) -i "C:/Users/Pichau/Documents/GitHub/ClozeMoodleGenerator/ClozeMoodleGenerator/win_resources.rc" $(RcCmpOptions)   $(ObjectSwitch)$(IntermediateDirectory)/win_resources.rc$(ObjectSuffix) $(RcIncludePath)
 
 -include ../build-$(ConfigurationName)/ClozeMoodleGenerator//*$(DependSuffix)
 ##

@@ -91,6 +91,18 @@ protected:
     {
         event.Skip();
     }
+    virtual void OnSaveClick(wxCommandEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnSaveAsClick(wxCommandEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnOpenClick(wxCommandEvent& event)
+    {
+        event.Skip();
+    }
     virtual void OnExportClick(wxCommandEvent& event)
     {
         event.Skip();

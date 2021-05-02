@@ -11,7 +11,6 @@ public:
     wxString m_catName = "CatName";
     int m_numQuiz = 30;
     wxString m_path = "";
-    wxString m_filename = "";
     
 protected:
     virtual void OnCancelClick(wxCommandEvent& event);
