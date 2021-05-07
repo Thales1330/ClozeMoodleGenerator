@@ -15,17 +15,23 @@
 #include <wx/iconbndl.h>
 #include <wx/artprov.h>
 #include <wx/sizer.h>
+#include <wx/ribbon/bar.h>
+#include <wx/ribbon/art.h>
+#include <wx/ribbon/page.h>
+#include <wx/ribbon/panel.h>
+#include <wx/ribbon/buttonbar.h>
 #include <wx/panel.h>
+#include <wx/notebook.h>
+#include <wx/imaglist.h>
 #include <wx/stc/stc.h>
-#include <wx/button.h>
+#include <wx/webview.h>
 #include <wx/grid.h>
 #include <wx/richtext/richtextctrl.h>
 #include <wx/menu.h>
-#include <wx/toolbar.h>
-#include <wx/webview.h>
 #include <wx/dialog.h>
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
+#include <wx/button.h>
 #if wxVERSION_NUMBER >= 2900
 #include <wx/persist.h>
 #include <wx/persist/toplevel.h>
@@ -47,16 +53,29 @@
 class MainFrameBaseClass : public wxFrame
 {
 protected:
+    wxRibbonBar* m_ribbonBarMain;
+    wxRibbonPage* m_ribbonPageMain;
+    wxRibbonPanel* m_ribbonPanelFile;
+    wxRibbonButtonBar* m_ribbonButtonBarFile;
+    wxRibbonPanel* m_ribbonPanelTools;
+    wxRibbonButtonBar* m_ribbonButtonBarTools;
+    wxRibbonPanel* m_ribbonPanelHelp;
+    wxRibbonButtonBar* m_ribbonButtonBarHelp;
     wxPanel* m_mainPanel;
+    wxNotebook* m_notebookMain;
+    wxPanel* m_panelHTML;
     wxStyledTextCtrl* m_stcHTML;
-    wxButton* m_buttonGetInput;
-    wxGrid* m_gridInputs;
+    wxPanel* m_panelPreview;
+#if wxUSE_WEBVIEW
+    wxWebView* m_webViewPreview;
+#endif // wxUSE_WEBVIEW
+
     wxStyledTextCtrl* m_stcPython;
+    wxGrid* m_gridInputs;
     wxRichTextCtrl* m_richTextCtrlConsole;
-    wxButton* m_buttonRunPy;
-    wxButton* m_buttonRunPreview;
     wxMenuBar* m_menuBar;
     wxMenu* m_nameFile;
+    wxMenuItem* m_menuItemNew;
     wxMenuItem* m_menuItemSave;
     wxMenuItem* m_menuItemSaveAs;
     wxMenuItem* m_menuItemOpen;
@@ -64,17 +83,58 @@ protected:
     wxMenuItem* m_menuItemExit;
     wxMenu* m_nameHelp;
     wxMenuItem* m_menuItemAbout;
-    wxToolBar* m_mainToolbar;
 
 protected:
+    virtual void OnWindowClose(wxCloseEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnSaveRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnOpenRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnExportRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnQuitRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnRunPyRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
+    virtual void OAboutRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
     virtual void OnIndicatorClick(wxStyledTextEvent& event)
     {
         event.Skip();
     }
-    virtual void GetInput(wxCommandEvent& event)
+    virtual void OnMarginClick(wxStyledTextEvent& event)
     {
         event.Skip();
     }
+#if wxUSE_WEBVIEW
+#endif // wxUSE_WEBVIEW
     virtual void OnCellDataChanged(wxGridEvent& event)
     {
         event.Skip();
@@ -83,11 +143,7 @@ protected:
     {
         event.Skip();
     }
-    virtual void OnIntClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnPreviewClick(wxCommandEvent& event)
+    virtual void OnNewClick(wxCommandEvent& event)
     {
         event.Skip();
     }
@@ -117,33 +173,41 @@ protected:
     }
 
 public:
+    wxRibbonBar* GetRibbonBarMain()
+    {
+        return m_ribbonBarMain;
+    }
     wxStyledTextCtrl* GetStcHTML()
     {
         return m_stcHTML;
     }
-    wxButton* GetButtonGetInput()
+    wxPanel* GetPanelHTML()
     {
-        return m_buttonGetInput;
+        return m_panelHTML;
     }
-    wxGrid* GetGridInputs()
+    wxWebView* GetWebViewPreview()
     {
-        return m_gridInputs;
+        return m_webViewPreview;
+    }
+    wxPanel* GetPanelPreview()
+    {
+        return m_panelPreview;
+    }
+    wxNotebook* GetNotebookMain()
+    {
+        return m_notebookMain;
     }
     wxStyledTextCtrl* GetStcPython()
     {
         return m_stcPython;
     }
+    wxGrid* GetGridInputs()
+    {
+        return m_gridInputs;
+    }
     wxRichTextCtrl* GetRichTextCtrlConsole()
     {
         return m_richTextCtrlConsole;
-    }
-    wxButton* GetButtonRunPy()
-    {
-        return m_buttonRunPy;
-    }
-    wxButton* GetButtonRunPreview()
-    {
-        return m_buttonRunPreview;
     }
     wxPanel* GetMainPanel()
     {
@@ -153,13 +217,9 @@ public:
     {
         return m_menuBar;
     }
-    wxToolBar* GetMainToolbar()
-    {
-        return m_mainToolbar;
-    }
     MainFrameBaseClass(wxWindow* parent,
         wxWindowID id = wxID_ANY,
-        const wxString& title = _("Cloze generator"),
+        const wxString& title = wxT("Cloze generator"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxSize(1280, 720),
         long style = wxCAPTION | wxRESIZE_BORDER | wxMAXIMIZE_BOX | wxMINIMIZE_BOX | wxSYSTEM_MENU | wxCLOSE_BOX);
@@ -184,7 +244,7 @@ public:
     }
     HTMLPreviewBase(wxWindow* parent,
         wxWindowID id = wxID_ANY,
-        const wxString& title = _("Preview"),
+        const wxString& title = wxT("Preview"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxSize(800, 600),
         long style = wxDEFAULT_FRAME_STYLE);
@@ -238,7 +298,7 @@ public:
     }
     ExportCloseBase(wxWindow* parent,
         wxWindowID id = wxID_ANY,
-        const wxString& title = _("Exportar questões"),
+        const wxString& title = wxT("Exportar questões"),
         const wxPoint& pos = wxDefaultPosition,
         const wxSize& size = wxSize(500, 300),
         long style = wxDEFAULT_DIALOG_STYLE);

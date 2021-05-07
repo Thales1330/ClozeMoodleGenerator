@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc">
   <!-- Handler Generation is ON -->
+  <object class="wxBitmap" name="about">data\about.png</object>
+  <object class="wxBitmap" name="close">data\close.png</object>
+  <object class="wxBitmap" name="export">data\export.png</object>
+  <object class="wxBitmap" name="input">data\input.png</object>
+  <object class="wxBitmap" name="new">data\new.png</object>
+  <object class="wxBitmap" name="open">data\open.png</object>
+  <object class="wxBitmap" name="prweview">data\prweview.png</object>
+  <object class="wxBitmap" name="runPy">data\runPy.png</object>
+  <object class="wxBitmap" name="save">data\save.png</object>
+  <object class="wxBitmap" name="saveAs">data\saveAs.png</object>
 </resource>

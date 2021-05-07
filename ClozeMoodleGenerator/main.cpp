@@ -3,13 +3,13 @@
 //#include <Python.h>
 //#include <pybind11/embed.h>
 
+#include "MainFrame.h"
 #include <wx/app.h>
 #include <wx/event.h>
-#include "MainFrame.h"
+#include <wx/fs_mem.h>
 #include <wx/image.h>
 #include <wx/log.h>
 #include <wx/webviewfshandler.h>
-#include <wx/fs_mem.h>
 
 #ifndef WX_PRECOMP
 #include <wx/wx.h>
@@ -19,22 +19,28 @@
 class MainApp : public wxApp
 {
 public:
-    MainApp() {}
-    virtual ~MainApp() {}
+    MainApp()
+    {
+    }
+    virtual ~MainApp()
+    {
+    }
 
-    virtual bool OnInit() {
+    virtual bool OnInit()
+    {
         // Add the common image handlers
-        wxImage::AddHandler( new wxPNGHandler );
-        wxImage::AddHandler( new wxJPEGHandler );
-        
-        //wxLog::SetActiveTarget(new wxLogStream());
-        wxFileSystem::AddHandler(new wxMemoryFSHandler);
-        
-        wxLocale* locale = new wxLocale();
-        locale->Init(locale->GetSystemLanguage(), wxLOCALE_LOAD_DEFAULT);        
+        wxImage::AddHandler(new wxPNGHandler);
+        wxImage::AddHandler(new wxJPEGHandler);
 
-        MainFrame *mainFrame = new MainFrame(NULL);
+        // wxLog::SetActiveTarget(new wxLogStream());
+        wxFileSystem::AddHandler(new wxMemoryFSHandler);
+
+        wxLocale* locale = new wxLocale();
+        locale->Init(locale->GetSystemLanguage(), wxLOCALE_LOAD_DEFAULT);
+
+        MainFrame* mainFrame = new MainFrame(NULL);
         SetTopWindow(mainFrame);
+        mainFrame->SetIcon(wxICON(aaaa));
         return GetTopWindow()->Show();
     }
 };

@@ -6,10 +6,10 @@
 #include <wx/aboutdlg.h>
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
+#include <wx/tokenzr.h>
 #include <wx/webviewfshandler.h>
 
 #include "ExportClose.h"
-#include "HTMLPreview.h"
 #include "XMLParser.h"
 
 MainFrame::MainFrame(wxWindow* parent)
@@ -18,6 +18,12 @@ MainFrame::MainFrame(wxWindow* parent)
     m_rndGenerator.seed(time(0));
     SetTitle(wxT("Gerador de questões"));
     SetSize(GetBestSize());
+
+    // Translation problems
+
+    m_artMetro = new wxRibbonMetroArtProvider();
+    m_ribbonBarMain->SetArtProvider(m_artMetro);
+    m_ribbonBarMain->Realize();
 
     m_stcPython->StyleClearAll();
     m_stcPython->SetLexer(wxSTC_LEX_PYTHON);
@@ -45,26 +51,58 @@ MainFrame::MainFrame(wxWindow* parent)
     m_stcPython->SetKeyWords(1, wxT("const int float void char double str"));
 
     m_stcHTML->StyleClearAll();
-    m_stcHTML->SetLexer(wxSTC_LEX_PYTHON);
+    m_stcHTML->SetLexer(wxSTC_LEX_HTML);
+
+    m_stcHTML->StyleSetForeground(wxSTC_H_COMMENT, wxColour(150, 150, 150));
+    m_stcHTML->StyleSetForeground(wxSTC_H_DOUBLESTRING, wxColour(255, 0, 0));
+    m_stcHTML->StyleSetForeground(wxSTC_H_SINGLESTRING, wxColour(255, 0, 0));
+    m_stcHTML->StyleSetForeground(wxSTC_H_ENTITY, wxColour(255, 0, 0));
+    m_stcHTML->StyleSetForeground(wxSTC_H_TAG, wxColour(0, 150, 0));
+    m_stcHTML->StyleSetForeground(wxSTC_H_TAGUNKNOWN, wxColour(0, 150, 0));
+    m_stcHTML->StyleSetForeground(wxSTC_H_ATTRIBUTE, wxColour(0, 0, 150));
+    m_stcHTML->StyleSetForeground(wxSTC_H_ATTRIBUTEUNKNOWN, wxColour(0, 0, 150));
+
+    m_stcHTML->IndicatorSetUnder(10, true);
+    m_stcHTML->IndicatorSetStyle(10, wxSTC_INDIC_ROUNDBOX);
+    ////m_stcHTML->IndicatorSetHoverStyle(m_highlightID, wxSTC_INDIC_ROUNDBOX);
+    m_stcHTML->IndicatorSetAlpha(10, 200);
+    m_stcHTML->IndicatorSetUnder(10, true);
+    m_stcHTML->IndicatorSetForeground(10, wxColor(255, 85, 0));
+    m_stcHTML->SetIndicatorCurrent(10);
+
+    // FOLD
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDEREND, wxSTC_MARK_BOXPLUSCONNECTED);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDEREND, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDEREND, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDEROPENMID, wxSTC_MARK_BOXMINUSCONNECTED);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDEROPENMID, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDEROPENMID, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDERMIDTAIL, wxSTC_MARK_TCORNER);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDERMIDTAIL, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDERMIDTAIL, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDERTAIL, wxSTC_MARK_LCORNER);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDERTAIL, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDERTAIL, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDERSUB, wxSTC_MARK_VLINE);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDERSUB, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDERSUB, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDER, wxSTC_MARK_BOXPLUS);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDER, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDER, wxColor(128, 128, 128));
+
+    m_stcHTML->MarkerDefine(wxSTC_MARKNUM_FOLDEROPEN, wxSTC_MARK_BOXMINUS);
+    m_stcHTML->MarkerSetForeground(wxSTC_MARKNUM_FOLDEROPEN, wxColor(243, 243, 243));
+    m_stcHTML->MarkerSetBackground(wxSTC_MARKNUM_FOLDEROPEN, wxColor(128, 128, 128));
+
+    m_stcHTML->SetFoldMarginColour(true, wxColor(255, 255, 255));
+    m_stcHTML->SetFoldMarginHiColour(true, wxColor(233, 233, 233));
 
     m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
-
-    m_stcHTML->StyleSetForeground(wxSTC_H_ATTRIBUTE, wxColour(150, 0, 0));
-    m_stcHTML->StyleSetForeground(wxSTC_H_DOUBLESTRING, wxColour(40, 0, 60));
-    m_stcHTML->StyleSetForeground(wxSTC_H_NUMBER, wxColour(0, 150, 0));
-    m_stcHTML->StyleSetForeground(wxSTC_H_TAG, wxColour(150, 0, 0));
-    m_stcHTML->StyleSetForeground(wxSTC_H_TAGEND, wxColour(150, 0, 150));
-    m_stcHTML->StyleSetForeground(wxSTC_H_ENTITY, wxColour(0, 0, 150));
-    m_stcHTML->StyleSetForeground(wxSTC_H_ASP, wxColour(255, 165, 0));
-    m_stcHTML->StyleSetForeground(wxSTC_H_COMMENT, wxColour(150, 150, 150));
-
-    // highlight indicator
-    m_stcHTML->IndicatorSetStyle(m_highlightID, wxSTC_INDIC_ROUNDBOX);
-    m_stcHTML->IndicatorSetHoverStyle(m_highlightID, wxSTC_INDIC_ROUNDBOX);
-    m_stcHTML->IndicatorSetAlpha(m_highlightID, 200);
-    m_stcHTML->IndicatorSetUnder(m_highlightID, true);
-    m_stcHTML->IndicatorSetForeground(m_highlightID, wxColor(255, 0, 0));
-    m_stcHTML->SetIndicatorCurrent(m_highlightID);
 
     auto style = m_richTextCtrlConsole->GetBasicStyle();
     style.SetTextColour(*wxWHITE);
@@ -72,8 +110,8 @@ MainFrame::MainFrame(wxWindow* parent)
     m_richTextCtrlConsole->SetBasicStyle(style);
 
     m_gridInputs->SetDefaultColSize(200);
-    m_gridInputs->SetDefaultCellFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-    m_gridInputs->SetLabelFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
+    m_gridInputs->SetDefaultCellFont(wxFont(12, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    m_gridInputs->SetLabelFont(wxFont(12, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
     m_gridInputs->AppendCols(5);
     m_gridInputs->SetColLabelValue(0, wxT("Nome"));
     m_gridInputs->SetColLabelValue(1, wxT("Inicial"));
@@ -90,7 +128,7 @@ MainFrame::MainFrame(wxWindow* parent)
     m_gridInputs->AutoSize();
     m_gridInputs->Layout();
     m_mainPanel->Layout();
-    
+
     Py_Initialize();
 }
 
@@ -112,21 +150,16 @@ void MainFrame::OnAbout(wxCommandEvent& event)
     wxAboutDialogInfo info;
     info.AddDeveloper(wxT("Thales Lima Oliveira"));
     info.SetLicence(wxT("GPL v2"));
-    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle"));
+    info.SetDescription(
+        wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from www.flaticon.com"));
     info.SetName(wxT("Gerador de questões"));
     ::wxAboutBox(info);
 }
 void MainFrame::OnIntClick(wxCommandEvent& event)
 {
-    if(CalculateOutputs(false)) {
-        SendToConsole(wxT("Script interpretado com sucesso! Clique em 'Preview' para visualizar as respostas padrões."),
-            *wxGREEN);
-    } else {
-        SendToConsole(wxT("Script com erro(s). Não foi possível calcular todas as saídas."), wxColour(252, 143, 0));
-    }
 }
 
-void MainFrame::SendToConsole(wxString str, wxColour backColour)
+void MainFrame::SendToConsole(wxString str, wxColour textColour)
 {
     int pos = m_richTextCtrlConsole->GetCaretPosition();
     if(str != "") {
@@ -134,30 +167,48 @@ void MainFrame::SendToConsole(wxString str, wxColour backColour)
         m_richTextCtrlConsole->MoveEnd();
         m_richTextCtrlConsole->ShowPosition(m_richTextCtrlConsole->GetCaretPosition());
     }
-    if(backColour != m_dfltConsoleBackColour) {
+    if(textColour != m_dfltConsoleTextColour) {
         wxRichTextRange range(pos + 4, m_richTextCtrlConsole->GetCaretPosition());
         wxRichTextAttr attr;
         m_richTextCtrlConsole->GetStyleForRange(range, attr);
-        attr.SetTextColour(backColour);
+        attr.SetTextColour(textColour);
         attr.SetFontWeight(wxFONTWEIGHT_BOLD);
         m_richTextCtrlConsole->SetStyle(range, attr);
     }
 }
 
-void MainFrame::RunPythonScript(std::vector<wxString> inputs,
-    wxCStrData script,
-    double& returnValue,
-    std::vector<wxString>& errors)
+PyObject* MainFrame::LoadPyModule(wxCStrData script, std::vector<wxString>& errors)
 {
-    PyObject *pModule, *pFunc;
-    PyObject *pArgs, *pValue;
+    PyObject* pModule;
 
     STDCapture captureErrorMsg;
     captureErrorMsg.BeginCapture();
 
-
     PyObject* pCompiledFn = Py_CompileString(script, "", Py_file_input);
     pModule = PyImport_ExecCodeModule("strScript", pCompiledFn);
+
+    if(pModule == NULL) {
+        PyErr_Print();
+        errors.emplace_back(wxT("Falha ao carregar o módulo."));
+        captureErrorMsg.EndCapture();
+        errors.emplace_back(captureErrorMsg.GetCapture());
+        return nullptr;
+    } else
+        captureErrorMsg.EndCapture();
+
+    return pModule;
+}
+
+void MainFrame::RunPythonScript(std::vector<wxString> inputs,
+    PyObject* pModule,
+    double& returnValue,
+    std::vector<wxString>& errors)
+{
+    PyObject* pFunc;
+    PyObject *pArgs, *pValue;
+
+    STDCapture captureErrorMsg;
+    captureErrorMsg.BeginCapture();
 
     if(pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, inputs[0]);
@@ -195,7 +246,6 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
                 Py_DECREF(pValue);
             } else {
                 Py_DECREF(pFunc);
-                Py_DECREF(pModule);
                 PyErr_Print();
                 errors.emplace_back(wxT("Não foi possível obter resposta."));
                 captureErrorMsg.EndCapture();
@@ -208,7 +258,7 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
             errors.emplace_back(wxString::Format(wxT("Função \"%s\" não encontrada."), inputs[0]));
         }
         Py_XDECREF(pFunc);
-        Py_DECREF(pModule);
+
     } else {
         PyErr_Print();
         errors.emplace_back(wxT("Falha ao carregar o módulo."));
@@ -216,7 +266,7 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
         errors.emplace_back(captureErrorMsg.GetCapture());
         return;
     }
-    //if(Py_FinalizeEx() < 0) {
+    // if(Py_FinalizeEx() < 0) {
     //    captureErrorMsg.EndCapture();
     //    errors.emplace_back(captureErrorMsg.GetCapture());
     //    return;
@@ -227,93 +277,33 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
 }
 void MainFrame::GetInput(wxCommandEvent& event)
 {
-    m_ioTagList.clear(); // Cleaning all previous tags
-
-    int pos = 0;
-    std::vector<int> startPos;
-    std::vector<int> endPos;
-    bool prevSBrackets, prevEBrackets = false;
-    for(auto ch : m_stcHTML->GetValue()) {
-        if(ch == '[') {
-            if(prevSBrackets) {
-                startPos.push_back(pos + 1);
-            } else
-                prevSBrackets = true;
-        } else {
-            prevSBrackets = false;
-        }
-
-        if(ch == ']') {
-            if(prevEBrackets) {
-                endPos.push_back(pos - 1);
-            } else
-                prevEBrackets = true;
-        } else {
-            prevEBrackets = false;
-        }
-
-        pos++;
-    }
-    if(startPos.size() != endPos.size()) {
-        SendToConsole(wxT("Erro ao analisar os colchetes ('[[' e ']]') de entradas e saídas, verifique as tags "
-                          "inseridas no arquivo HTML"));
-        return;
-    }
-
-    for(unsigned int i = 0; i < startPos.size(); ++i) {
-        wxString tagStr = m_stcHTML->GetValue().Mid(startPos[i], endPos[i] - startPos[i]);
-        IOTag newIOTag;
-        if(tagStr[0] == '+')
-            newIOTag.type = IOTagType::input;
-        else if(tagStr[0] == '-')
-            newIOTag.type = IOTagType::output;
-        else {
-            SendToConsole(wxT("Erro ao analisar as tags ('+' e '-') de entradas e saídas, verifique o arquivo HTML"));
-            return;
-        }
-        newIOTag.name = tagStr.Right(tagStr.Length() - 1);
-        newIOTag.position = std::make_pair(startPos[i], endPos[i]);
-
-        m_ioTagList.push_back(newIOTag);
-    }
-
-    for(auto tag : m_ioTagList) {
-        m_stcHTML->IndicatorFillRange(tag.position.first, tag.position.second - tag.position.first);
-    }
-
-    FillTable();
 }
 void MainFrame::OnPreviewClick(wxCommandEvent& event)
 {
-    wxString htmlCode = m_stcHTML->GetValue();
 
-    // Set inputs and outputs in html
-    for(auto tag : m_ioTagList) {
-        wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
-        wxString strToReplace = "[[" + ioStr + tag.name + "]]";
-        if(tag.type == IOTagType::input) {
-            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue));
-        } else {
-            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value));
-        }
-    }
-
-    auto preview = new HTMLPreview(this, htmlCode);
-    preview->Show();
-    preview->Maximize();
+    // auto preview = new HTMLPreview(this, htmlCode);
+    // preview->Show();
+    // preview->Maximize();
 }
 void MainFrame::OnIndicatorClick(wxStyledTextEvent& event)
 {
     int pos = event.GetPosition();
     IOTag tagClick;
     for(auto tag : m_ioTagList) {
-        if(pos >= tag.position.first && pos <= tag.position.second)
+        if(pos >= (tag.position.first + tag.offset) && pos <= (tag.position.second + tag.offset))
             tagClick = tag;
     }
-    SendToConsole(
-        wxString::Format("%s, %s, pos = (%d, %d), init = %f, end = %f, std = %f, dp = %d, value = %f", tagClick.name,
-            tagClick.type == IOTagType::input ? "in" : "out", tagClick.position.first, tagClick.position.second,
-            tagClick.start, tagClick.end, tagClick.stdValue, tagClick.decimalPlaces, tagClick.value));
+    if(tagClick.name != "") {
+        if(tagClick.type == IOTagType::input) {
+            SendToConsole(
+                wxString::Format(wxT("Entrada: %s\n\tPos = (%d, %d)\n\tInicial = %f, Final = %f, Padrão = %f, CD = %d"),
+                    tagClick.name, tagClick.position.first, tagClick.position.second, tagClick.start, tagClick.end,
+                    tagClick.stdValue, tagClick.decimalPlaces));
+        } else {
+            SendToConsole(wxString::Format(wxT("Saída: %s\n\tPos = (%d, %d)\n\tResultado = %f"), tagClick.name,
+                tagClick.position.first, tagClick.position.second, tagClick.value));
+        }
+    }
 
     for(int i = 0; i < m_gridInputs->GetNumberRows(); ++i) {
         if(tagClick.name == m_gridInputs->GetCellValue(i, 0)) {
@@ -530,7 +520,20 @@ void MainFrame::GenerateNewRandomInputValues()
 
 bool MainFrame::CalculateOutputs(bool useInputValue)
 {
+    std::vector<wxString> errors;
     bool noError = true;
+
+    auto* pModule = LoadPyModule(m_stcPython->GetText().c_str(), errors);
+
+    for(auto error : errors) {
+        if(error != "") {
+            SendToConsole(error);
+            noError = false;
+        }
+    }
+    
+    if(!noError) return false;
+
     for(auto& tag : m_ioTagList) {
         if(tag.type == IOTagType::output) {
             wxString str = tag.name;
@@ -561,9 +564,8 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
                 }
             }
 
-            std::vector<wxString> errors;
             double response = 0.0;
-            RunPythonScript(inputs, m_stcPython->GetText().c_str(), response, errors);
+            RunPythonScript(inputs, pModule, response, errors);
 
             for(auto error : errors) {
                 if(error != "") {
@@ -575,6 +577,9 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
             tag.value = response;
         }
     }
+    if(pModule != NULL)
+        Py_DECREF(pModule);
+
     return noError;
 }
 
@@ -604,6 +609,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event)
 
     wxTextFile file(openFileDialog.GetPath());
     OpenFile(file);
+    FormatHTML();
 }
 void MainFrame::OnSaveAsClick(wxCommandEvent& event)
 {
@@ -663,7 +669,7 @@ wxString MainFrame::GetStrSave()
 void MainFrame::OpenFile(wxTextFile& file)
 {
     file.Open();
-    
+
     m_ioTagList.clear();
     m_ioTagTable.clear();
 
@@ -700,10 +706,10 @@ void MainFrame::OpenFile(wxTextFile& file)
                     }
                 }
                 IOTag newTag;
-                
+
                 long typeID, decimalPlaces, startPos, endPos;
                 double start, end, stdValue;
-                
+
                 ioStrs[0].ToLong(&typeID);
                 ioStrs[2].ToDouble(&start);
                 ioStrs[3].ToDouble(&end);
@@ -711,7 +717,7 @@ void MainFrame::OpenFile(wxTextFile& file)
                 ioStrs[5].ToLong(&decimalPlaces);
                 ioStrs[6].ToLong(&startPos);
                 ioStrs[7].ToLong(&endPos);
-                
+
                 newTag.type = static_cast<IOTagType>(typeID);
                 newTag.name = ioStrs[1];
                 newTag.start = start;
@@ -719,24 +725,231 @@ void MainFrame::OpenFile(wxTextFile& file)
                 newTag.stdValue = stdValue;
                 newTag.decimalPlaces = decimalPlaces;
                 newTag.position = std::make_pair<int>(startPos, endPos);
-                
+
                 m_ioTagList.push_back(newTag);
-                
+
                 str = file.GetNextLine();
             }
         }
     }
     // do something with the last line in str
-    
+
     m_stcHTML->ClearAll();
     m_stcHTML->SetValue(htmlStr);
-    
+
     m_stcPython->ClearAll();
     m_stcPython->SetValue(pyStr);
-    
+
     FillTable();
-    
+
     m_filePath = file.GetName();
 
     file.Close();
+}
+void MainFrame::OnMarginClick(wxStyledTextEvent& event)
+{
+    m_stcHTML->ToggleFold(m_stcHTML->LineFromPosition(event.GetPosition()));
+}
+
+void MainFrame::FormatHTML()
+{
+    wxString newHTMLTxt = "";
+    for(int i = 0; i < m_stcHTML->GetNumberOfLines(); ++i) {
+        wxString line = m_stcHTML->GetLine(i);
+        wxString token = "img src=";
+        int tokenPos = line.Find(token);
+        if(tokenPos != wxNOT_FOUND) {
+            if(tokenPos + token.size() < line.size()) {
+                if(line[tokenPos + token.size()] != '\n') {
+                    line.insert(tokenPos + token.size(), "\n");
+                    int lastTokenPos = line.Find('"', true);
+                    if(lastTokenPos != wxNOT_FOUND) {
+                        line.insert(lastTokenPos + 1, "\n");
+                    }
+                }
+            }
+        }
+        newHTMLTxt += line;
+    }
+    m_stcHTML->SetValue(newHTMLTxt);
+    std::vector<int> linesWithImg;
+    for(int i = 0; i < m_stcHTML->GetNumberOfLines(); ++i) {
+        wxString line = m_stcHTML->GetLine(i);
+        if(line.Find("img src=") != wxNOT_FOUND) {
+            m_stcHTML->SetFoldLevel(i, 1024 | wxSTC_FOLDLEVELHEADERFLAG);
+            m_stcHTML->SetFoldLevel(++i, 1025);
+        }
+    }
+    m_stcHTML->FoldAll(0);
+}
+void MainFrame::OAboutRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    wxUnusedVar(event);
+    wxAboutDialogInfo info;
+    info.AddDeveloper(wxT("Thales Lima Oliveira"));
+    info.SetLicence(wxT("GPL v2"));
+    info.SetDescription(
+        wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from www.flaticon.com"));
+    info.SetName(wxT("Gerador de questões"));
+    ::wxAboutBox(info);
+}
+void MainFrame::OnExportRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    ExportClose expDlg(this);
+    if(expDlg.ShowModal() == wxID_OK) {
+        ExportXMLToFile(expDlg.m_numQuiz, expDlg.m_catName, expDlg.m_path);
+    }
+}
+void MainFrame::OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    FormatHTML();
+    m_ioTagList.clear(); // Cleaning all previous tags
+
+    int pos = 0;
+    m_numNonASCIICh = 0;
+    std::vector<int> currentNumNonASCIICh;
+    std::vector<int> startPos;
+    std::vector<int> endPos;
+    bool prevSBrackets = false;
+    bool prevEBrackets = false;
+    for(auto ch : m_stcHTML->GetValue()) {
+        if(ch == '[') {
+            if(prevSBrackets) {
+                startPos.push_back(pos + 1);
+                currentNumNonASCIICh.push_back(m_numNonASCIICh);
+            } else
+                prevSBrackets = true;
+        } else {
+            prevSBrackets = false;
+        }
+
+        if(ch == ']') {
+            if(prevEBrackets) {
+                endPos.push_back(pos - 1);
+            } else
+                prevEBrackets = true;
+        } else {
+            prevEBrackets = false;
+        }
+
+        pos++;
+
+        if(static_cast<unsigned char>(ch) > 127)
+            m_numNonASCIICh++;
+    }
+    if(startPos.size() != endPos.size()) {
+        SendToConsole(wxT("Erro ao analisar os colchetes ('[[' e ']]') de entradas e saídas, verifique as tags "
+                          "inseridas no arquivo HTML"));
+        return;
+    }
+
+    for(unsigned int i = 0; i < startPos.size(); ++i) {
+        wxString tagStr = m_stcHTML->GetValue().Mid(startPos[i], endPos[i] - startPos[i]);
+        IOTag newIOTag;
+        if(tagStr[0] == '+')
+            newIOTag.type = IOTagType::input;
+        else if(tagStr[0] == '-')
+            newIOTag.type = IOTagType::output;
+        else {
+            SendToConsole(wxT("Erro ao analisar as tags ('+' e '-') de entradas e saídas, verifique o arquivo HTML"));
+            return;
+        }
+        newIOTag.name = tagStr.Right(tagStr.Length() - 1);
+        newIOTag.position = std::make_pair(startPos[i], endPos[i]);
+        newIOTag.offset = currentNumNonASCIICh[i];
+
+        m_ioTagList.push_back(newIOTag);
+    }
+
+    m_stcHTML->IndicatorClearRange(0, m_stcHTML->GetValue().length());
+    for(auto tag : m_ioTagList) {
+        m_stcHTML->IndicatorFillRange(tag.position.first + tag.offset, tag.position.second - tag.position.first);
+    }
+
+    FillTable();
+}
+void MainFrame::OnOpenRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    wxFileDialog openFileDialog(
+        this, wxT("Abrir arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+    if(openFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxTextFile file(openFileDialog.GetPath());
+    OpenFile(file);
+    FormatHTML();
+}
+void MainFrame::OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    wxString htmlCode = m_stcHTML->GetValue();
+
+    // Set inputs and outputs in html
+    for(auto tag : m_ioTagList) {
+        wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
+        wxString strToReplace = "[[" + ioStr + tag.name + "]]";
+        if(tag.type == IOTagType::input) {
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue));
+        } else {
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value));
+        }
+    }
+
+    m_webViewPreview->SetPage("<html><body>" + htmlCode + "</html></body>", "");
+
+    m_notebookMain->SetSelection(1);
+}
+void MainFrame::OnQuitRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    Close();
+}
+void MainFrame::OnRunPyRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    if(CalculateOutputs(false)) {
+        SendToConsole(wxT("Script interpretado com sucesso! Clique em 'Preview' para visualizar as respostas padrões."),
+            *wxGREEN);
+    } else {
+        SendToConsole(wxT("Script com erro(s). Não foi possível calcular todas as saídas."), wxColour(252, 143, 0));
+    }
+}
+void MainFrame::OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+    if(saveFileDialog.ShowModal() == wxID_CANCEL)
+        return;
+    m_filePath = saveFileDialog.GetPath();
+
+    wxString saveStr = GetStrSave();
+
+    wxTextFile file(m_filePath);
+    file.AddLine(saveStr);
+    file.Write();
+    file.Close();
+}
+void MainFrame::OnSaveRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    if(m_filePath == "") {
+        wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
+            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+        if(saveFileDialog.ShowModal() == wxID_CANCEL)
+            return;
+        m_filePath = saveFileDialog.GetPath();
+    }
+
+    wxString saveStr = GetStrSave();
+
+    wxTextFile file(m_filePath);
+    file.AddLine(saveStr);
+    file.Write();
+    file.Close();
+}
+void MainFrame::OnWindowClose(wxCloseEvent& event)
+{
+    wxMessageDialog dlg(
+        this, wxT("Deseja realmente sair sem salvar?"), wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+    if(dlg.ShowModal() != wxID_NO)
+        event.Skip();
+}
+void MainFrame::OnNewClick(wxCommandEvent& event)
+{
 }

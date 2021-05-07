@@ -10,6 +10,7 @@
 #include <utility>
 #include <random>
 #include <wx/textfile.h>
+#include "ArtMetro.h"
 
 enum class IOTagType
 {
@@ -22,7 +23,10 @@ struct IOTag
     IOTagType type = IOTagType::input;
     wxString name = "";
     std::pair<int, int> position = std::make_pair(0,0);
-    double start, end, stdValue = 0.0;
+    int offset = 0;
+    double start = 0.0;
+    double end = 0.0;
+    double stdValue = 0.0;
     int decimalPlaces = 2;
     double value = 0.0;
 };
@@ -37,6 +41,18 @@ public:
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
 protected:
+    virtual void OnNewClick(wxCommandEvent& event);
+    virtual void OnWindowClose(wxCloseEvent& event);
+    virtual void OAboutRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnExportRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnGetInputRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnOpenRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnPreviewRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnQuitRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnRunPyRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnSaveRibbonClick(wxRibbonButtonBarEvent& event);
+    virtual void OnMarginClick(wxStyledTextEvent& event);
     virtual void OnOpenClick(wxCommandEvent& event);
     virtual void OnSaveAsClick(wxCommandEvent& event);
     virtual void OnSaveClick(wxCommandEvent& event);
@@ -47,19 +63,25 @@ protected:
     virtual void GetInput(wxCommandEvent& event);
     virtual void OnPreviewClick(wxCommandEvent& event);
     virtual void OnIntClick(wxCommandEvent& event);
-    void SendToConsole(wxString str, wxColour backColour = wxColour(0, 120, 215));
-    void RunPythonScript(std::vector<wxString> inputs, wxCStrData script, double &returnValue, std::vector<wxString> &errors);
+    void SendToConsole(wxString str, wxColour textColour = wxColour(255, 255, 255));
+    PyObject* LoadPyModule(wxCStrData script, std::vector<wxString> &errors);
+    void RunPythonScript(std::vector<wxString> inputs, PyObject* pModule, double &returnValue, std::vector<wxString> &errors);
     void FillTable();
     void ExportXMLToFile(int numQuiz, wxString catName, wxString path);
     double GetRandom(double init, double end);
     wxString GetStrSave();
     void OpenFile(wxTextFile& file);
+    void FormatHTML();
     
     void GenerateNewRandomInputValues();
     bool CalculateOutputs(bool useInputValue = true);
     wxString GetHTMLFromCurrentIOs();
     
-    const wxColour m_dfltConsoleBackColour = wxColour(0, 120, 215);
+    wxRibbonMetroArtProvider* m_artMetro = nullptr;
+    
+    const wxColour m_dfltConsoleBackColour = wxColour(84, 18, 63);
+    const wxColour m_dfltConsoleTextColour = wxColour(255, 255, 255);
+    unsigned int m_numNonASCIICh = 0;
     
     std::vector<IOTag> m_ioTagList;
     std::vector<IOTag> m_ioTagTable;

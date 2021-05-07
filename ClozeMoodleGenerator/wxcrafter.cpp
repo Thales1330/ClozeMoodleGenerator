@@ -29,19 +29,92 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     wxBoxSizer* boxSizerMain = new wxBoxSizer(wxVERTICAL);
     this->SetSizer(boxSizerMain);
 
+    m_ribbonBarMain = new wxRibbonBar(
+        this, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), wxRIBBON_BAR_DEFAULT_STYLE);
+    m_ribbonBarMain->SetArtProvider(new wxRibbonAUIArtProvider);
+
+    boxSizerMain->Add(m_ribbonBarMain, 0, wxEXPAND, WXC_FROM_DIP(5));
+
+    m_ribbonPageMain = new wxRibbonPage(m_ribbonBarMain, wxID_ANY, wxT("Ferramentas"), wxNullBitmap, 0);
+    m_ribbonBarMain->SetActivePage(m_ribbonPageMain);
+
+    m_ribbonPanelFile = new wxRibbonPanel(m_ribbonPageMain, wxID_ANY, wxT("Arquivo"), wxNullBitmap, wxDefaultPosition,
+        wxDLG_UNIT(m_ribbonPageMain, wxSize(-1, -1)), wxRIBBON_PANEL_DEFAULT_STYLE);
+
+    m_ribbonButtonBarFile = new wxRibbonButtonBar(
+        m_ribbonPanelFile, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_ribbonPanelFile, wxSize(-1, -1)), 0);
+
+    m_ribbonButtonBarFile->AddButton(wxID_NEW, wxT("Novo"), wxXmlResource::Get()->LoadBitmap(wxT("new")),
+        wxT("Help String"), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarFile->AddButton(
+        wxID_SAVE, wxT("Salvar"), wxXmlResource::Get()->LoadBitmap(wxT("save")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarFile->AddButton(wxID_SAVEAS, wxT("Salvar Como..."),
+        wxXmlResource::Get()->LoadBitmap(wxT("saveAs")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarFile->AddButton(
+        wxID_OPEN, wxT("Abrir"), wxXmlResource::Get()->LoadBitmap(wxT("open")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarFile->AddButton(wxID_HARDDISK, wxT("Exportar"), wxXmlResource::Get()->LoadBitmap(wxT("export")),
+        wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarFile->AddButton(
+        wxID_EXIT, wxT("Sair"), wxXmlResource::Get()->LoadBitmap(wxT("close")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+    m_ribbonButtonBarFile->Realize();
+
+    m_ribbonPanelTools = new wxRibbonPanel(m_ribbonPageMain, wxID_ANY, wxT("Ferramentas"), wxNullBitmap,
+        wxDefaultPosition, wxDLG_UNIT(m_ribbonPageMain, wxSize(-1, -1)), wxRIBBON_PANEL_DEFAULT_STYLE);
+
+    m_ribbonButtonBarTools = new wxRibbonButtonBar(
+        m_ribbonPanelTools, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_ribbonPanelTools, wxSize(-1, -1)), 0);
+
+    m_ribbonButtonBarTools->AddButton(wxID_ADD, wxT("Atualizar Entradas/Saídas"),
+        wxXmlResource::Get()->LoadBitmap(wxT("input")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarTools->AddButton(wxID_EXECUTE, wxT("Interpretar Script"),
+        wxXmlResource::Get()->LoadBitmap(wxT("runPy")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+
+    m_ribbonButtonBarTools->AddButton(wxID_VIEW_DETAILS, wxT("Pré-visualizar"),
+        wxXmlResource::Get()->LoadBitmap(wxT("prweview")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+    m_ribbonButtonBarTools->Realize();
+
+    m_ribbonPanelHelp = new wxRibbonPanel(m_ribbonPageMain, wxID_ANY, wxT("Ajuda"), wxNullBitmap, wxDefaultPosition,
+        wxDLG_UNIT(m_ribbonPageMain, wxSize(-1, -1)), wxRIBBON_PANEL_DEFAULT_STYLE);
+
+    m_ribbonButtonBarHelp = new wxRibbonButtonBar(
+        m_ribbonPanelHelp, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_ribbonPanelHelp, wxSize(-1, -1)), 0);
+
+    m_ribbonButtonBarHelp->AddButton(
+        wxID_ABOUT, wxT("Sobre..."), wxXmlResource::Get()->LoadBitmap(wxT("about")), wxT(""), wxRIBBON_BUTTON_NORMAL);
+    m_ribbonButtonBarHelp->Realize();
+    m_ribbonBarMain->Realize();
     m_mainPanel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), wxTAB_TRAVERSAL);
 
     boxSizerMain->Add(m_mainPanel, 1, wxEXPAND, WXC_FROM_DIP(5));
 
-    wxBoxSizer* boxSizer_LVL1_1 = new wxBoxSizer(wxHORIZONTAL);
+    wxBoxSizer* boxSizer_LVL1_1 = new wxBoxSizer(wxVERTICAL);
     m_mainPanel->SetSizer(boxSizer_LVL1_1);
 
-    wxBoxSizer* boxSizer_LVL2_2 = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer* boxSizer_LVL2_2 = new wxBoxSizer(wxHORIZONTAL);
 
-    boxSizer_LVL1_1->Add(boxSizer_LVL2_2, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+    boxSizer_LVL1_1->Add(boxSizer_LVL2_2, 1, wxEXPAND, WXC_FROM_DIP(5));
+
+    m_notebookMain =
+        new wxNotebook(m_mainPanel, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), wxBK_DEFAULT);
+    m_notebookMain->SetName(wxT("m_notebookMain"));
+
+    boxSizer_LVL2_2->Add(m_notebookMain, 1, wxEXPAND, WXC_FROM_DIP(5));
+
+    m_panelHTML = new wxPanel(
+        m_notebookMain, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_notebookMain, wxSize(-1, -1)), wxTAB_TRAVERSAL);
+    m_notebookMain->AddPage(m_panelHTML, wxT("HTML"), true);
+
+    wxBoxSizer* boxSizerLVL3_2 = new wxBoxSizer(wxVERTICAL);
+    m_panelHTML->SetSizer(boxSizerLVL3_2);
 
     m_stcHTML =
-        new wxStyledTextCtrl(m_mainPanel, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
+        new wxStyledTextCtrl(m_panelHTML, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_panelHTML, wxSize(-1, -1)), 0);
     wxFont m_stcHTMLFont(12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Courier New"));
     m_stcHTML->SetFont(m_stcHTMLFont);
     // Configure the fold margin
@@ -91,34 +164,21 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_stcHTML->SetKeyWords(3, wxT("def"));
     m_stcHTML->SetKeyWords(4, wxT("def"));
 
-    boxSizer_LVL2_2->Add(m_stcHTML, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+    boxSizerLVL3_2->Add(m_stcHTML, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
-    m_buttonGetInput = new wxButton(
-        m_mainPanel, wxID_ANY, _("Obter entradas"), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
-#if wxVERSION_NUMBER >= 2904
-    m_buttonGetInput->SetBitmap(wxArtProvider::GetBitmap(wxART_GO_DOWN, wxART_TOOLBAR, wxDefaultSize), wxLEFT);
-    m_buttonGetInput->SetBitmapMargins(2, 2);
-#endif
+    m_panelPreview = new wxPanel(
+        m_notebookMain, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_notebookMain, wxSize(-1, -1)), wxTAB_TRAVERSAL);
+    m_notebookMain->AddPage(m_panelPreview, wxT("Preview"), false);
 
-    boxSizer_LVL2_2->Add(m_buttonGetInput, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, WXC_FROM_DIP(5));
+    wxBoxSizer* boxSizerLVL3_3 = new wxBoxSizer(wxVERTICAL);
+    m_panelPreview->SetSizer(boxSizerLVL3_3);
 
-    m_gridInputs = new wxGrid(m_mainPanel, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, 200)),
-        wxWANTS_CHARS | wxALWAYS_SHOW_SB | wxBORDER_STATIC | wxVSCROLL);
-    wxFont m_gridInputsFont(16, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Segoe UI"));
-    m_gridInputs->SetFont(m_gridInputsFont);
-    m_gridInputs->CreateGrid(0, 0);
-    m_gridInputs->SetRowLabelAlignment(wxALIGN_RIGHT, wxALIGN_CENTRE);
-    m_gridInputs->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-#if wxVERSION_NUMBER >= 2904
-    m_gridInputs->UseNativeColHeader(true);
-#endif
-    m_gridInputs->EnableEditing(true);
+#if wxUSE_WEBVIEW
+    m_webViewPreview = wxWebView::New(m_panelPreview, wxID_ANY, wxT("about:blank"), wxDefaultPosition,
+        wxDLG_UNIT(m_panelPreview, wxSize(-1, -1)), wxWebViewBackendDefault, 0);
 
-    boxSizer_LVL2_2->Add(m_gridInputs, 0, wxALL | wxEXPAND, WXC_FROM_DIP(5));
-
-    wxBoxSizer* boxSizer_LVL2_1 = new wxBoxSizer(wxVERTICAL);
-
-    boxSizer_LVL1_1->Add(boxSizer_LVL2_1, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+    boxSizerLVL3_3->Add(m_webViewPreview, 1, wxEXPAND, WXC_FROM_DIP(5));
+#endif // wxUSE_WEBVIEW
 
     m_stcPython =
         new wxStyledTextCtrl(m_mainPanel, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
@@ -171,72 +231,75 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_stcPython->SetKeyWords(3, wxT("def"));
     m_stcPython->SetKeyWords(4, wxT("def"));
 
-    boxSizer_LVL2_1->Add(m_stcPython, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+    boxSizer_LVL2_2->Add(m_stcPython, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
+
+    wxBoxSizer* boxSizer_LVL2_1 = new wxBoxSizer(wxHORIZONTAL);
+
+    boxSizer_LVL1_1->Add(boxSizer_LVL2_1, 0, wxEXPAND, WXC_FROM_DIP(5));
+
+    m_gridInputs = new wxGrid(m_mainPanel, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(300, 150)),
+        wxWANTS_CHARS | wxALWAYS_SHOW_SB | wxBORDER_STATIC | wxVSCROLL);
+    wxFont m_gridInputsFont(16, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Segoe UI"));
+    m_gridInputs->SetFont(m_gridInputsFont);
+    m_gridInputs->CreateGrid(0, 0);
+    m_gridInputs->SetRowLabelAlignment(wxALIGN_RIGHT, wxALIGN_CENTRE);
+    m_gridInputs->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
+#if wxVERSION_NUMBER >= 2904
+    m_gridInputs->UseNativeColHeader(true);
+#endif
+    m_gridInputs->EnableEditing(true);
+
+    boxSizer_LVL2_1->Add(m_gridInputs, 0, wxALL, WXC_FROM_DIP(5));
 
     m_richTextCtrlConsole =
-        new wxRichTextCtrl(m_mainPanel, wxID_ANY, wxT(""), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)),
+        new wxRichTextCtrl(m_mainPanel, wxID_ANY, wxT(""), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, 150)),
             wxTE_READONLY | wxTE_MULTILINE | wxTE_PROCESS_TAB | wxTE_PROCESS_ENTER | wxWANTS_CHARS);
-    m_richTextCtrlConsole->SetBackgroundColour(wxColour(wxT("rgb(0,120,215)")));
+    m_richTextCtrlConsole->SetBackgroundColour(wxColour(wxT("rgb(84,18,63)")));
     m_richTextCtrlConsole->SetForegroundColour(wxColour(wxT("rgb(255,255,255)")));
     wxFont m_richTextCtrlConsoleFont(
         12, wxFONTFAMILY_MODERN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Courier New"));
     m_richTextCtrlConsole->SetFont(m_richTextCtrlConsoleFont);
 
-    boxSizer_LVL2_1->Add(m_richTextCtrlConsole, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
-
-    wxBoxSizer* boxSizer_LVL3_1 = new wxBoxSizer(wxHORIZONTAL);
-
-    boxSizer_LVL2_1->Add(boxSizer_LVL3_1, 0, wxALL | wxALIGN_CENTER_HORIZONTAL, WXC_FROM_DIP(5));
-
-    m_buttonRunPy = new wxButton(
-        m_mainPanel, wxID_ANY, _("Interpretar Script"), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
-#if wxVERSION_NUMBER >= 2904
-    m_buttonRunPy->SetBitmap(wxArtProvider::GetBitmap(wxART_HELP_SIDE_PANEL, wxART_TOOLBAR, wxDefaultSize), wxLEFT);
-    m_buttonRunPy->SetBitmapMargins(2, 2);
-#endif
-
-    boxSizer_LVL3_1->Add(m_buttonRunPy, 0, wxALL | wxALIGN_CENTER_VERTICAL, WXC_FROM_DIP(5));
-
-    m_buttonRunPreview = new wxButton(
-        m_mainPanel, wxID_ANY, _("Preview"), wxDefaultPosition, wxDLG_UNIT(m_mainPanel, wxSize(-1, -1)), 0);
-#if wxVERSION_NUMBER >= 2904
-    m_buttonRunPreview->SetBitmap(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_TOOLBAR, wxDefaultSize), wxLEFT);
-    m_buttonRunPreview->SetBitmapMargins(2, 2);
-#endif
-
-    boxSizer_LVL3_1->Add(
-        m_buttonRunPreview, 0, wxALL | wxALIGN_CENTER_HORIZONTAL | wxALIGN_CENTER_VERTICAL, WXC_FROM_DIP(5));
+    boxSizer_LVL2_1->Add(m_richTextCtrlConsole, 1, wxALL, WXC_FROM_DIP(5));
 
     m_menuBar = new wxMenuBar(0);
     this->SetMenuBar(m_menuBar);
 
     m_nameFile = new wxMenu();
-    m_menuBar->Append(m_nameFile, _("Arquivo"));
+    m_menuBar->Append(m_nameFile, wxT("Arquivo"));
 
-    m_menuItemSave = new wxMenuItem(m_nameFile, wxID_SAVE, _("Salvar\tCtrl-S"), wxT(""), wxITEM_NORMAL);
+    m_menuItemNew = new wxMenuItem(m_nameFile, wxID_NEW, wxT("Salvar\tCtrl-N"), wxT(""), wxITEM_NORMAL);
+    m_nameFile->Append(m_menuItemNew);
+
+    m_menuItemSave = new wxMenuItem(m_nameFile, wxID_SAVE, wxT("Salvar\tCtrl-S"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemSave);
 
     m_menuItemSaveAs =
-        new wxMenuItem(m_nameFile, wxID_SAVEAS, _("Salvar Como...\tCtrl-Shift-S"), wxT(""), wxITEM_NORMAL);
+        new wxMenuItem(m_nameFile, wxID_SAVEAS, wxT("Salvar Como...\tCtrl-Shift-S"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemSaveAs);
 
-    m_menuItemOpen = new wxMenuItem(m_nameFile, wxID_OPEN, _("Abrir\tCtrl-O"), wxT(""), wxITEM_NORMAL);
+    m_menuItemOpen = new wxMenuItem(m_nameFile, wxID_OPEN, wxT("Abrir\tCtrl-O"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemOpen);
 
-    m_menuItemExport = new wxMenuItem(m_nameFile, wxID_CONVERT, _("Exportar\tCtrl-E"), wxT(""), wxITEM_NORMAL);
+    m_menuItemExport = new wxMenuItem(m_nameFile, wxID_CONVERT, wxT("Exportar\tCtrl-E"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemExport);
 
-    m_menuItemExit = new wxMenuItem(m_nameFile, wxID_EXIT, _("Sair\tAlt-X"), _("Quit"), wxITEM_NORMAL);
+    m_menuItemExit = new wxMenuItem(m_nameFile, wxID_EXIT, wxT("Sair\tAlt-X"), wxT("Quit"), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemExit);
 
     m_nameHelp = new wxMenu();
-    m_menuBar->Append(m_nameHelp, _("Ajuda"));
+    m_menuBar->Append(m_nameHelp, wxT("Ajuda"));
 
-    m_menuItemAbout = new wxMenuItem(m_nameHelp, wxID_ABOUT, _("Sobre..."), wxT(""), wxITEM_NORMAL);
+    m_menuItemAbout = new wxMenuItem(m_nameHelp, wxID_ABOUT, wxT("Sobre..."), wxT(""), wxITEM_NORMAL);
     m_nameHelp->Append(m_menuItemAbout);
 
-    m_mainToolbar = this->CreateToolBar(wxTB_FLAT, wxID_ANY);
-    m_mainToolbar->SetToolBitmapSize(wxSize(16, 16));
+#if wxVERSION_NUMBER >= 2900
+    if(!wxPersistenceManager::Get().Find(m_notebookMain)) {
+        wxPersistenceManager::Get().RegisterAndRestore(m_notebookMain);
+    } else {
+        wxPersistenceManager::Get().Restore(m_notebookMain);
+    }
+#endif
 
     SetName(wxT("MainFrameBaseClass"));
     SetMinClientSize(wxSize(1280, 720));
@@ -257,17 +320,36 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     }
 #endif
     // Connect events
+    this->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(MainFrameBaseClass::OnWindowClose), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_SAVE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_SAVEAS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveAsRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_OPEN, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnOpenRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_HARDDISK, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnExportRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_EXIT, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnQuitRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Connect(wxID_ADD, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnGetInputRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Connect(wxID_EXECUTE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnRunPyRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Connect(wxID_VIEW_DETAILS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnPreviewRibbonClick), NULL, this);
+    m_ribbonButtonBarHelp->Connect(wxID_ABOUT, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OAboutRibbonClick), NULL, this);
     m_stcHTML->Connect(
         wxEVT_STC_INDICATOR_CLICK, wxStyledTextEventHandler(MainFrameBaseClass::OnIndicatorClick), NULL, this);
-    m_buttonGetInput->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::GetInput), NULL, this);
+    m_stcHTML->Connect(wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(MainFrameBaseClass::OnMarginClick), NULL, this);
+#if wxUSE_WEBVIEW
+
+#endif // wxUSE_WEBVIEW
     m_gridInputs->Connect(
         wxEVT_GRID_CELL_CHANGED, wxGridEventHandler(MainFrameBaseClass::OnCellDataChanged), NULL, this);
     m_gridInputs->Connect(wxEVT_GRID_CELL_LEFT_CLICK, wxGridEventHandler(MainFrameBaseClass::OnLeftClick), NULL, this);
-    m_buttonRunPy->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnIntClick), NULL, this);
-    m_buttonRunPreview->Connect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnPreviewClick), NULL, this);
+    this->Connect(m_menuItemNew->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnNewClick), NULL, this);
     this->Connect(m_menuItemSave->GetId(), wxEVT_COMMAND_MENU_SELECTED,
         wxCommandEventHandler(MainFrameBaseClass::OnSaveClick), NULL, this);
     this->Connect(m_menuItemSaveAs->GetId(), wxEVT_COMMAND_MENU_SELECTED,
@@ -284,18 +366,38 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
 
 MainFrameBaseClass::~MainFrameBaseClass()
 {
+    this->Disconnect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(MainFrameBaseClass::OnWindowClose), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_SAVE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_SAVEAS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveAsRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_OPEN, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnOpenRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_HARDDISK, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnExportRibbonClick), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_EXIT, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnQuitRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Disconnect(wxID_ADD, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnGetInputRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Disconnect(wxID_EXECUTE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnRunPyRibbonClick), NULL, this);
+    m_ribbonButtonBarTools->Disconnect(wxID_VIEW_DETAILS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnPreviewRibbonClick), NULL, this);
+    m_ribbonButtonBarHelp->Disconnect(wxID_ABOUT, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OAboutRibbonClick), NULL, this);
     m_stcHTML->Disconnect(
         wxEVT_STC_INDICATOR_CLICK, wxStyledTextEventHandler(MainFrameBaseClass::OnIndicatorClick), NULL, this);
-    m_buttonGetInput->Disconnect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::GetInput), NULL, this);
+    m_stcHTML->Disconnect(
+        wxEVT_STC_MARGINCLICK, wxStyledTextEventHandler(MainFrameBaseClass::OnMarginClick), NULL, this);
+#if wxUSE_WEBVIEW
+
+#endif // wxUSE_WEBVIEW
     m_gridInputs->Disconnect(
         wxEVT_GRID_CELL_CHANGED, wxGridEventHandler(MainFrameBaseClass::OnCellDataChanged), NULL, this);
     m_gridInputs->Disconnect(
         wxEVT_GRID_CELL_LEFT_CLICK, wxGridEventHandler(MainFrameBaseClass::OnLeftClick), NULL, this);
-    m_buttonRunPy->Disconnect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnIntClick), NULL, this);
-    m_buttonRunPreview->Disconnect(
-        wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(MainFrameBaseClass::OnPreviewClick), NULL, this);
+    this->Disconnect(m_menuItemNew->GetId(), wxEVT_COMMAND_MENU_SELECTED,
+        wxCommandEventHandler(MainFrameBaseClass::OnNewClick), NULL, this);
     this->Disconnect(m_menuItemSave->GetId(), wxEVT_COMMAND_MENU_SELECTED,
         wxCommandEventHandler(MainFrameBaseClass::OnSaveClick), NULL, this);
     this->Disconnect(m_menuItemSaveAs->GetId(), wxEVT_COMMAND_MENU_SELECTED,
@@ -329,7 +431,7 @@ HTMLPreviewBase::HTMLPreviewBase(wxWindow* parent,
     this->SetSizer(boxSizerMain);
 
 #if wxUSE_WEBVIEW
-    m_webView = wxWebView::New(this, wxID_ANY, _("about:blank"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)),
+    m_webView = wxWebView::New(this, wxID_ANY, wxT("about:blank"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)),
         wxWebViewBackendDefault, 0);
 
     boxSizerMain->Add(m_webView, 1, wxEXPAND, WXC_FROM_DIP(5));
@@ -388,25 +490,25 @@ ExportCloseBase::ExportCloseBase(wxWindow* parent,
     boxSizerMain->Add(boxSizerLVL1_1, 1, wxALL | wxEXPAND, WXC_FROM_DIP(5));
 
     m_staticTextCatName = new wxStaticText(
-        this, wxID_ANY, _("Nome da categoria"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
+        this, wxID_ANY, wxT("Nome da categoria"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 
     boxSizerLVL1_1->Add(m_staticTextCatName, 0, wxLEFT | wxRIGHT | wxTOP, WXC_FROM_DIP(5));
 
     m_textCtrlCatName = new wxTextCtrl(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 #if wxVERSION_NUMBER >= 3000
-    m_textCtrlCatName->SetHint(_("Provinha_2021-1"));
+    m_textCtrlCatName->SetHint(wxT("Provinha_2021-1"));
 #endif
 
     boxSizerLVL1_1->Add(m_textCtrlCatName, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, WXC_FROM_DIP(5));
 
     m_staticTextNumQuiz = new wxStaticText(
-        this, wxID_ANY, _("Número de questões"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
+        this, wxID_ANY, wxT("Número de questões"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 
     boxSizerLVL1_1->Add(m_staticTextNumQuiz, 0, wxLEFT | wxRIGHT | wxTOP, WXC_FROM_DIP(5));
 
     m_textCtrlNumQuiz = new wxTextCtrl(this, wxID_ANY, wxT(""), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 #if wxVERSION_NUMBER >= 3000
-    m_textCtrlNumQuiz->SetHint(_("30"));
+    m_textCtrlNumQuiz->SetHint(wxT("30"));
 #endif
 
     boxSizerLVL1_1->Add(m_textCtrlNumQuiz, 0, wxLEFT | wxRIGHT | wxBOTTOM | wxEXPAND, WXC_FROM_DIP(5));
@@ -416,12 +518,12 @@ ExportCloseBase::ExportCloseBase(wxWindow* parent,
     boxSizerLVL1_1->Add(boxSizerLVL2_1, 1, wxALL | wxALIGN_CENTER_HORIZONTAL, WXC_FROM_DIP(5));
 
     m_buttonExportar =
-        new wxButton(this, wxID_ANY, _("Exportar"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
+        new wxButton(this, wxID_ANY, wxT("Exportar"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 
     boxSizerLVL2_1->Add(m_buttonExportar, 0, wxALL, WXC_FROM_DIP(5));
 
     m_buttonCancel =
-        new wxButton(this, wxID_ANY, _("Cancelar"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
+        new wxButton(this, wxID_ANY, wxT("Cancelar"), wxDefaultPosition, wxDLG_UNIT(this, wxSize(-1, -1)), 0);
 
     boxSizerLVL2_1->Add(m_buttonCancel, 0, wxALL, WXC_FROM_DIP(5));
 

@@ -3,6 +3,7 @@
   <Description/>
   <Dependencies/>
   <VirtualDirectory Name="src">
+    <File Name="ArtMetro.cpp"/>
     <File Name="ExportClose.cpp"/>
     <File Name="XMLParser.cpp"/>
     <File Name="HTMLPreview.cpp"/>
@@ -12,6 +13,7 @@
     <File Name="wxcrafter_bitmaps.cpp"/>
   </VirtualDirectory>
   <VirtualDirectory Name="include">
+    <File Name="ArtMetro.h"/>
     <File Name="ExportClose.h"/>
     <File Name="XMLParser.h"/>
     <VirtualDirectory Name="rapidXML">
@@ -87,7 +89,7 @@
         <Preprocessor Value="NDEBUG"/>
         <Preprocessor Value="UNICODE"/>
       </Compiler>
-      <Linker Options="$(shell wx-config --libs std,stc,webview);-static;-limm32" Required="yes">
+      <Linker Options="$(shell wx-config --libs std,aui,stc,webview,adv,ribbon);-static;-limm32" Required="yes">
         <LibraryPath Value="C:\Users\Pichau\AppData\Local\Programs\Python\Python39-32\libs"/>
         <LibraryPath Value="C:\Users\thale\AppData\Local\Programs\Python\Python39-32\libs"/>
         <Library Value="python39"/>
