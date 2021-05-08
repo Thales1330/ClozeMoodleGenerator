@@ -89,6 +89,10 @@ protected:
     {
         event.Skip();
     }
+    virtual void OnNewRibbonClick(wxRibbonButtonBarEvent& event)
+    {
+        event.Skip();
+    }
     virtual void OnSaveRibbonClick(wxRibbonButtonBarEvent& event)
     {
         event.Skip();

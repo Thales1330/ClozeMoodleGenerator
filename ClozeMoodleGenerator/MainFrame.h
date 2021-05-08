@@ -41,6 +41,7 @@ public:
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
 protected:
+    virtual void OnNewRibbonClick(wxRibbonButtonBarEvent& event);
     virtual void OnNewClick(wxCommandEvent& event);
     virtual void OnWindowClose(wxCloseEvent& event);
     virtual void OAboutRibbonClick(wxRibbonButtonBarEvent& event);

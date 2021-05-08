@@ -7,7 +7,6 @@
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/tokenzr.h>
-#include <wx/webviewfshandler.h>
 
 #include "ExportClose.h"
 #include "XMLParser.h"
@@ -19,7 +18,8 @@ MainFrame::MainFrame(wxWindow* parent)
     SetTitle(wxT("Gerador de questões"));
     SetSize(GetBestSize());
 
-    // Translation problems
+    // m_webViewPreview->New(wxWebViewBackendIE);
+    // wxWebViewIE::MSWSetModernEmulationLevel();
 
     m_artMetro = new wxRibbonMetroArtProvider();
     m_ribbonBarMain->SetArtProvider(m_artMetro);
@@ -111,6 +111,7 @@ MainFrame::MainFrame(wxWindow* parent)
 
     m_gridInputs->SetDefaultColSize(200);
     m_gridInputs->SetDefaultCellFont(wxFont(12, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    m_gridInputs->SetDefaultCellAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
     m_gridInputs->SetLabelFont(wxFont(12, wxFONTFAMILY_ROMAN, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_BOLD));
     m_gridInputs->AppendCols(5);
     m_gridInputs->SetColLabelValue(0, wxT("Nome"));
@@ -341,9 +342,9 @@ void MainFrame::FillTable()
     for(auto tag : m_ioTagTable) {
         m_gridInputs->AppendRows(1);
         m_gridInputs->SetCellValue(rowNumber, 0, tag.name);
-        m_gridInputs->SetCellValue(rowNumber, 1, wxString::Format("%f", tag.start));
-        m_gridInputs->SetCellValue(rowNumber, 2, wxString::Format("%f", tag.end));
-        m_gridInputs->SetCellValue(rowNumber, 3, wxString::Format("%f", tag.stdValue));
+        m_gridInputs->SetCellValue(rowNumber, 1, wxString::FromDouble(tag.start, tag.decimalPlaces));
+        m_gridInputs->SetCellValue(rowNumber, 2, wxString::FromDouble(tag.end, tag.decimalPlaces));
+        m_gridInputs->SetCellValue(rowNumber, 3, wxString::FromDouble(tag.stdValue, tag.decimalPlaces));
         m_gridInputs->SetCellValue(rowNumber, 4, wxString::Format("%d", tag.decimalPlaces));
         rowNumber++;
     }
@@ -531,8 +532,9 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
             noError = false;
         }
     }
-    
-    if(!noError) return false;
+
+    if(!noError)
+        return false;
 
     for(auto& tag : m_ioTagList) {
         if(tag.type == IOTagType::output) {
@@ -888,13 +890,26 @@ void MainFrame::OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
         wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
         wxString strToReplace = "[[" + ioStr + tag.name + "]]";
         if(tag.type == IOTagType::input) {
-            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue));
+            htmlCode.Replace(strToReplace,
+                "<b><span style=\"background-color: #FFFF00\">" +
+                    wxString::FromDouble(tag.stdValue, tag.decimalPlaces) + "</span></b>");
         } else {
-            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value));
+            htmlCode.Replace(strToReplace,
+                "<b><span style=\"background-color: #FFFF00\">" + wxString::FromDouble(tag.value) + "</span></b>");
         }
     }
 
-    m_webViewPreview->SetPage("<html><body>" + htmlCode + "</html></body>", "");
+    // head with scripts
+    wxString head = "<head>\n";
+
+    head += "<link rel=\"stylesheet\" type=\"text/css\" "
+            "href=\"https://moodle.ifg.edu.br/theme/styles.php/academi/1616615844_1/all\" />\n";
+    // MathJax (fail in wxWebView)
+    // head += "<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n<script
+    // id=\"MathJax-script\" async\nsrc=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>";
+    head += "</head>";
+
+    m_webViewPreview->SetPage("<html>" + head + "<body>" + htmlCode + "</body></html>", "");
 
     m_notebookMain->SetSelection(1);
 }
@@ -952,4 +967,39 @@ void MainFrame::OnWindowClose(wxCloseEvent& event)
 }
 void MainFrame::OnNewClick(wxCommandEvent& event)
 {
+    wxMessageDialog dlg(this, wxT("Essa ação irá apagar todos os dados sem salvar.\nDeseja mesmo fazer isso?"),
+        wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+    if(dlg.ShowModal() == wxID_NO)
+        return;
+
+    m_filePath = "";
+    m_stcPython->SetText("#Escreva o script em python aqui!\n\ndef soma(a, b):\n\treturn a + b");
+    m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
+    m_richTextCtrlConsole->Clear();
+
+    m_ioTagList.clear();
+    m_ioTagTable.clear();
+    
+    m_webViewPreview->SetPage("<html><body></body></html>", "");
+
+    FillTable();
+}
+void MainFrame::OnNewRibbonClick(wxRibbonButtonBarEvent& event)
+{
+    wxMessageDialog dlg(this, wxT("Essa ação irá apagar todos os dados sem salvar.\nDeseja mesmo fazer isso?"),
+        wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+    if(dlg.ShowModal() == wxID_NO)
+        return;
+
+    m_filePath = "";
+    m_stcPython->SetText("#Escreva o script em python aqui!\n\ndef soma(a, b):\n\treturn a + b");
+    m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
+    m_richTextCtrlConsole->Clear();
+
+    m_ioTagList.clear();
+    m_ioTagTable.clear();
+    
+    m_webViewPreview->SetPage("<html><body></body></html>", "");
+
+    FillTable();
 }

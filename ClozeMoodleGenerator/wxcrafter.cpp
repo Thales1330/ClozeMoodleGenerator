@@ -42,7 +42,7 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
         wxDLG_UNIT(m_ribbonPageMain, wxSize(-1, -1)), wxRIBBON_PANEL_DEFAULT_STYLE);
 
     m_ribbonButtonBarFile = new wxRibbonButtonBar(
-        m_ribbonPanelFile, wxID_ANY, wxDefaultPosition, wxDLG_UNIT(m_ribbonPanelFile, wxSize(-1, -1)), 0);
+        m_ribbonPanelFile, wxID_NEW, wxDefaultPosition, wxDLG_UNIT(m_ribbonPanelFile, wxSize(-1, -1)), 0);
 
     m_ribbonButtonBarFile->AddButton(wxID_NEW, wxT("Novo"), wxXmlResource::Get()->LoadBitmap(wxT("new")),
         wxT("Help String"), wxRIBBON_BUTTON_NORMAL);
@@ -242,7 +242,7 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     wxFont m_gridInputsFont(16, wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, wxT("Segoe UI"));
     m_gridInputs->SetFont(m_gridInputsFont);
     m_gridInputs->CreateGrid(0, 0);
-    m_gridInputs->SetRowLabelAlignment(wxALIGN_RIGHT, wxALIGN_CENTRE);
+    m_gridInputs->SetRowLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
     m_gridInputs->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
 #if wxVERSION_NUMBER >= 2904
     m_gridInputs->UseNativeColHeader(true);
@@ -268,7 +268,7 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
     m_nameFile = new wxMenu();
     m_menuBar->Append(m_nameFile, wxT("Arquivo"));
 
-    m_menuItemNew = new wxMenuItem(m_nameFile, wxID_NEW, wxT("Salvar\tCtrl-N"), wxT(""), wxITEM_NORMAL);
+    m_menuItemNew = new wxMenuItem(m_nameFile, wxID_NEW, wxT("Novo\tCtrl-N"), wxT(""), wxITEM_NORMAL);
     m_nameFile->Append(m_menuItemNew);
 
     m_menuItemSave = new wxMenuItem(m_nameFile, wxID_SAVE, wxT("Salvar\tCtrl-S"), wxT(""), wxITEM_NORMAL);
@@ -321,6 +321,8 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
 #endif
     // Connect events
     this->Connect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(MainFrameBaseClass::OnWindowClose), NULL, this);
+    m_ribbonButtonBarFile->Connect(wxID_NEW, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnNewRibbonClick), NULL, this);
     m_ribbonButtonBarFile->Connect(wxID_SAVE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
         wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveRibbonClick), NULL, this);
     m_ribbonButtonBarFile->Connect(wxID_SAVEAS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
@@ -367,6 +369,8 @@ MainFrameBaseClass::MainFrameBaseClass(wxWindow* parent,
 MainFrameBaseClass::~MainFrameBaseClass()
 {
     this->Disconnect(wxEVT_CLOSE_WINDOW, wxCloseEventHandler(MainFrameBaseClass::OnWindowClose), NULL, this);
+    m_ribbonButtonBarFile->Disconnect(wxID_NEW, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
+        wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnNewRibbonClick), NULL, this);
     m_ribbonButtonBarFile->Disconnect(wxID_SAVE, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
         wxRibbonButtonBarEventHandler(MainFrameBaseClass::OnSaveRibbonClick), NULL, this);
     m_ribbonButtonBarFile->Disconnect(wxID_SAVEAS, wxEVT_COMMAND_RIBBONBUTTON_CLICKED,
