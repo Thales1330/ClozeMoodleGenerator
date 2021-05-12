@@ -32,3 +32,6 @@
 *.app
 
 *.codelite
+*.vs
+*.tlog
+Release

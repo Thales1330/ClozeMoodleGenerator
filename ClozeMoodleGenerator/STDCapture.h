@@ -1,7 +1,11 @@
 #ifndef STDCAPTURE_H
 #define STDCAPTURE_H
-
+#ifdef _MSC_VER
+#include <io.h>
+#endif
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <stdio.h>
 #include <string>
@@ -15,8 +19,8 @@ public:
         m_pipe[WRITE] = 0;
         if (_pipe(m_pipe, 65536, O_BINARY) == -1)
             return;
-        m_oldStdOut = dup(fileno(stdout));
-        m_oldStdErr = dup(fileno(stderr));
+        m_oldStdOut = _dup(_fileno(stdout));
+        m_oldStdErr = _dup(_fileno(stderr));
         if (m_oldStdOut == -1 || m_oldStdErr == -1)
             return;
 
@@ -30,13 +34,13 @@ public:
             EndCapture();
         }
         if (m_oldStdOut > 0)
-            close(m_oldStdOut);
+            _close(m_oldStdOut);
         if (m_oldStdErr > 0)
-            close(m_oldStdErr);
+            _close(m_oldStdErr);
         if (m_pipe[READ] > 0)
-            close(m_pipe[READ]);
+            _close(m_pipe[READ]);
         if (m_pipe[WRITE] > 0)
-            close(m_pipe[WRITE]);
+            _close(m_pipe[WRITE]);
     }
 
 
@@ -48,8 +52,8 @@ public:
             EndCapture();
         fflush(stdout);
         fflush(stderr);
-        dup2(m_pipe[WRITE], fileno(stdout));
-        dup2(m_pipe[WRITE], fileno(stderr));
+        _dup2(m_pipe[WRITE], _fileno(stdout));
+        _dup2(m_pipe[WRITE], _fileno(stderr));
         m_capturing = true;
     }
 
@@ -61,25 +65,25 @@ public:
             return false;
         fflush(stdout);
         fflush(stderr);
-        dup2(m_oldStdOut, fileno(stdout));
-        dup2(m_oldStdErr, fileno(stderr));
+        _dup2(m_oldStdOut, _fileno(stdout));
+        _dup2(m_oldStdErr, _fileno(stderr));
         m_captured.clear();
 
         std::string buf;
         const int bufSize = 1024;
         buf.resize(bufSize);
         int bytesRead = 0;
-        if (!eof(m_pipe[READ]))
+        if (!_eof(m_pipe[READ]))
         {
-            bytesRead = read(m_pipe[READ], &(*buf.begin()), bufSize);
+            bytesRead = _read(m_pipe[READ], &(*buf.begin()), bufSize);
         }
         while(bytesRead == bufSize)
         {
             m_captured += buf;
             bytesRead = 0;
-            if (!eof(m_pipe[READ]))
+            if (!_eof(m_pipe[READ]))
             {
-                bytesRead = read(m_pipe[READ], &(*buf.begin()), bufSize);
+                bytesRead = _read(m_pipe[READ], &(*buf.begin()), bufSize);
             }
         }
         if (bytesRead > 0)

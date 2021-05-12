@@ -1,5 +1,5 @@
 #include "MainFrame.h"
-#include "STDCapture.h"
+//#include "wx/msw/webview_ie.h" // not working
 #include <random>
 #include <sstream>
 #include <vector>
@@ -11,6 +11,140 @@
 #include "ExportClose.h"
 #include "XMLParser.h"
 
+namespace emb
+{
+// Copyright (C) 2011 Mateusz Loskot <mateusz@loskot.net>
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at
+// http://www.boost.org/LICENSE_1_0.txt)
+//
+// Blog article: http://mateusz.loskot.net/?p=2819
+
+typedef std::function<void(std::string)> stdout_write_type;
+
+struct Stdout {
+    PyObject_HEAD stdout_write_type write;
+};
+
+PyObject* Stdout_write(PyObject* self, PyObject* args)
+{
+    std::size_t written(0);
+    Stdout* selfimpl = reinterpret_cast<Stdout*>(self);
+    if(selfimpl->write) {
+        char* data;
+        if(!PyArg_ParseTuple(args, "s", &data))
+            return 0;
+
+        std::string str(data);
+        selfimpl->write(str);
+        written = str.size();
+    }
+    return PyLong_FromSize_t(written);
+}
+
+PyObject* Stdout_flush(PyObject* self, PyObject* args)
+{
+    // no-op
+    return Py_BuildValue("");
+}
+
+PyMethodDef Stdout_methods[] = {
+    { "write", Stdout_write, METH_VARARGS, "sys.stderr.write" },
+    { "flush", Stdout_flush, METH_VARARGS, "sys.stderr.flush" }, { 0, 0, 0, 0 } // sentinel
+};
+
+PyTypeObject StdoutType = {
+    PyVarObject_HEAD_INIT(0, 0) "emb.StderrType", /* tp_name */
+    sizeof(Stdout),                               /* tp_basicsize */
+    0,                                            /* tp_itemsize */
+    0,                                            /* tp_dealloc */
+    0,                                            /* tp_print */
+    0,                                            /* tp_getattr */
+    0,                                            /* tp_setattr */
+    0,                                            /* tp_reserved */
+    0,                                            /* tp_repr */
+    0,                                            /* tp_as_number */
+    0,                                            /* tp_as_sequence */
+    0,                                            /* tp_as_mapping */
+    0,                                            /* tp_hash  */
+    0,                                            /* tp_call */
+    0,                                            /* tp_str */
+    0,                                            /* tp_getattro */
+    0,                                            /* tp_setattro */
+    0,                                            /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                           /* tp_flags */
+    "emb.Stderr objects",                         /* tp_doc */
+    0,                                            /* tp_traverse */
+    0,                                            /* tp_clear */
+    0,                                            /* tp_richcompare */
+    0,                                            /* tp_weaklistoffset */
+    0,                                            /* tp_iter */
+    0,                                            /* tp_iternext */
+    Stdout_methods,                               /* tp_methods */
+    0,                                            /* tp_members */
+    0,                                            /* tp_getset */
+    0,                                            /* tp_base */
+    0,                                            /* tp_dict */
+    0,                                            /* tp_descr_get */
+    0,                                            /* tp_descr_set */
+    0,                                            /* tp_dictoffset */
+    0,                                            /* tp_init */
+    0,                                            /* tp_alloc */
+    0,                                            /* tp_new */
+};
+
+PyModuleDef embmodule = {
+    PyModuleDef_HEAD_INIT,
+    "emb",
+    0,
+    -1,
+    0,
+};
+
+// Internal state
+PyObject* g_stdout;
+PyObject* g_stdout_saved;
+
+PyMODINIT_FUNC PyInit_emb(void)
+{
+    g_stdout = 0;
+    g_stdout_saved = 0;
+
+    StdoutType.tp_new = PyType_GenericNew;
+    if(PyType_Ready(&StdoutType) < 0)
+        return 0;
+
+    PyObject* m = PyModule_Create(&embmodule);
+    if(m) {
+        Py_INCREF(&StdoutType);
+        PyModule_AddObject(m, "Stderr", reinterpret_cast<PyObject*>(&StdoutType));
+    }
+    return m;
+}
+
+void set_stdout(stdout_write_type write)
+{
+    if(!g_stdout) {
+        g_stdout_saved = PySys_GetObject("stderr"); // borrowed
+        g_stdout = StdoutType.tp_new(&StdoutType, 0, 0);
+    }
+
+    Stdout* impl = reinterpret_cast<Stdout*>(g_stdout);
+    impl->write = write;
+    PySys_SetObject("stderr", g_stdout);
+}
+
+void reset_stdout()
+{
+    if(g_stdout_saved)
+        PySys_SetObject("stderr", g_stdout_saved);
+
+    Py_XDECREF(g_stdout);
+    g_stdout = 0;
+}
+
+} // namespace emb
+
 MainFrame::MainFrame(wxWindow* parent)
     : MainFrameBaseClass(parent)
 {
@@ -20,6 +154,7 @@ MainFrame::MainFrame(wxWindow* parent)
 
     // m_webViewPreview->New(wxWebViewBackendIE);
     // wxWebViewIE::MSWSetModernEmulationLevel();
+    // wxWebViewIE::MSWSetEmulationLevel(wxWEBVIEWIE_EMU_IE11);
 
     m_artMetro = new wxRibbonMetroArtProvider();
     m_ribbonBarMain->SetArtProvider(m_artMetro);
@@ -130,7 +265,9 @@ MainFrame::MainFrame(wxWindow* parent)
     m_gridInputs->Layout();
     m_mainPanel->Layout();
 
+    PyImport_AppendInittab("emb", emb::PyInit_emb);
     Py_Initialize();
+    PyImport_ImportModule("emb");
 }
 
 MainFrame::~MainFrame()
@@ -151,8 +288,8 @@ void MainFrame::OnAbout(wxCommandEvent& event)
     wxAboutDialogInfo info;
     info.AddDeveloper(wxT("Thales Lima Oliveira"));
     info.SetLicence(wxT("GPL v2"));
-    info.SetDescription(
-        wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from www.flaticon.com"));
+    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from "
+                            "www.flaticon.com\nThis application uses the WebView2 SDK"));
     info.SetName(wxT("Gerador de questões"));
     ::wxAboutBox(info);
 }
@@ -182,20 +319,21 @@ PyObject* MainFrame::LoadPyModule(wxCStrData script, std::vector<wxString>& erro
 {
     PyObject* pModule;
 
-    STDCapture captureErrorMsg;
-    captureErrorMsg.BeginCapture();
-
     PyObject* pCompiledFn = Py_CompileString(script, "", Py_file_input);
     pModule = PyImport_ExecCodeModule("strScript", pCompiledFn);
 
-    if(pModule == NULL) {
-        PyErr_Print();
-        errors.emplace_back(wxT("Falha ao carregar o módulo."));
-        captureErrorMsg.EndCapture();
-        errors.emplace_back(captureErrorMsg.GetCapture());
+    if(pModule == nullptr) {
+        std::string buffer;
+        {
+            emb::stdout_write_type write = [&buffer](std::string s) { buffer += s; };
+            emb::set_stdout(write);
+            PyErr_Print();
+            emb::reset_stdout();
+            errors.emplace_back(wxT("Falha ao carregar o módulo."));
+        }
+        errors.emplace_back(buffer);
         return nullptr;
-    } else
-        captureErrorMsg.EndCapture();
+    }
 
     return pModule;
 }
@@ -208,73 +346,83 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
     PyObject* pFunc;
     PyObject *pArgs, *pValue;
 
-    STDCapture captureErrorMsg;
-    captureErrorMsg.BeginCapture();
+    std::string buffer;
+    {
+        emb::stdout_write_type write = [&buffer](std::string s) { buffer += s; };
+        emb::set_stdout(write);
 
-    if(pModule != NULL) {
-        pFunc = PyObject_GetAttrString(pModule, inputs[0]);
-        // pFunc is a new reference
+        if(pModule != nullptr) {
+            pFunc = PyObject_GetAttrString(pModule, inputs[0]);
+            // pFunc is a new reference
 
-        if(pFunc && PyCallable_Check(pFunc)) {
-            pArgs = PyTuple_New(inputs.size() - 1);
-            for(unsigned int i = 1; i < inputs.size(); ++i) {
-                double dValue = 0.0;
-                if(!inputs[i].ToCDouble(&dValue)) {
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pModule);
-                    errors.emplace_back(wxT("Não foi possível converter o argumento."));
-                    captureErrorMsg.EndCapture();
-                    errors.emplace_back(captureErrorMsg.GetCapture());
+            if(pFunc && PyCallable_Check(pFunc)) {
+                pArgs = PyTuple_New(inputs.size() - 1);
+                for(unsigned int i = 1; i < inputs.size(); ++i) {
+                    double dValue = 0.0;
+                    if(!inputs[i].ToCDouble(&dValue)) {
+                        Py_DECREF(pArgs);
+                        // Py_DECREF(pModule);
+                        errors.emplace_back(wxT("Não foi possível converter o argumento."));
+                        errors.emplace_back(wxString::Format(
+                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[0]));
+                        // captureErrorMsg.EndCapture();
+                        // errors.emplace_back(captureErrorMsg.GetCapture());
+                        errors.emplace_back(buffer);
+                        return;
+                    }
+                    pValue = PyFloat_FromDouble(dValue);
+                    if(!pValue) {
+                        Py_DECREF(pArgs);
+                        // Py_DECREF(pModule);
+                        errors.emplace_back(wxString::Format(
+                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[0]));
+                        // captureErrorMsg.EndCapture();
+                        // errors.emplace_back(captureErrorMsg.GetCapture());
+                        errors.emplace_back(buffer);
+                        return;
+                    }
+                    // pValue reference stolen here:
+                    PyTuple_SetItem(pArgs, i - 1, pValue);
+                }
+                pValue = PyObject_CallObject(pFunc, pArgs);
+                Py_DECREF(pArgs);
+                if(pValue != NULL) {
+                    returnValue = PyFloat_AsDouble(pValue);
+                    Py_DECREF(pValue);
+                } else {
+                    Py_DECREF(pFunc);
+                    PyErr_Print();
+                    emb::reset_stdout();
+                    errors.emplace_back(
+                        wxString::Format(wxT("Não foi possível obter resposta da função \"%s\""), inputs[0]));
+                    // captureErrorMsg.EndCapture();
+                    // errors.emplace_back(captureErrorMsg.GetCapture());
+                    errors.emplace_back(buffer);
                     return;
                 }
-                pValue = PyFloat_FromDouble(dValue);
-                if(!pValue) {
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pModule);
-                    errors.emplace_back(wxT("Não foi possível converter o argumento."));
-                    captureErrorMsg.EndCapture();
-                    errors.emplace_back(captureErrorMsg.GetCapture());
-                    return;
-                }
-                // pValue reference stolen here:
-                PyTuple_SetItem(pArgs, i - 1, pValue);
-            }
-            pValue = PyObject_CallObject(pFunc, pArgs);
-            Py_DECREF(pArgs);
-            if(pValue != NULL) {
-                // Retorno com sucesso!! vvv
-                returnValue = PyFloat_AsDouble(pValue);
-                Py_DECREF(pValue);
             } else {
-                Py_DECREF(pFunc);
-                PyErr_Print();
-                errors.emplace_back(wxT("Não foi possível obter resposta."));
-                captureErrorMsg.EndCapture();
-                errors.emplace_back(captureErrorMsg.GetCapture());
-                return;
+                if(PyErr_Occurred()) {
+                    PyErr_Print();
+                }
+                emb::reset_stdout();
+                errors.emplace_back(wxString::Format(wxT("Função \"%s\" não encontrada."), inputs[0]));
             }
+            Py_XDECREF(pFunc);
+
         } else {
-            if(PyErr_Occurred())
-                PyErr_Print();
-            errors.emplace_back(wxString::Format(wxT("Função \"%s\" não encontrada."), inputs[0]));
+            PyErr_Print();
+            emb::reset_stdout();
+            errors.emplace_back(wxT("Falha ao carregar o módulo."));
+            // captureErrorMsg.EndCapture();
+            // errors.emplace_back(captureErrorMsg.GetCapture());
+            errors.emplace_back(buffer);
+            return;
         }
-        Py_XDECREF(pFunc);
-
-    } else {
-        PyErr_Print();
-        errors.emplace_back(wxT("Falha ao carregar o módulo."));
-        captureErrorMsg.EndCapture();
-        errors.emplace_back(captureErrorMsg.GetCapture());
-        return;
     }
-    // if(Py_FinalizeEx() < 0) {
-    //    captureErrorMsg.EndCapture();
-    //    errors.emplace_back(captureErrorMsg.GetCapture());
-    //    return;
-    //}
 
-    captureErrorMsg.EndCapture();
-    errors.emplace_back(captureErrorMsg.GetCapture());
+    // captureErrorMsg.EndCapture();
+    // errors.emplace_back(captureErrorMsg.GetCapture());
+    errors.emplace_back(buffer);
 }
 void MainFrame::GetInput(wxCommandEvent& event)
 {
@@ -434,8 +582,8 @@ void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path)
     XMLParser::SetNodeValue(doc, textCatNode, "$course$/top/" + catName);
     rapidxml::xml_node<>* infoNode = XMLParser::AppendNode(doc, questionCatNode, "info");
     XMLParser::SetNodeAttribute(doc, infoNode, "format", "html");
-    rapidxml::xml_node<>* textInfoNode = XMLParser::AppendNode(doc, infoNode, "text");
-    rapidxml::xml_node<>* idCatNumberNode = XMLParser::AppendNode(doc, questionCatNode, "idnumber");
+    XMLParser::AppendNode(doc, infoNode, "text");
+    XMLParser::AppendNode(doc, questionCatNode, "idnumber");
 
     for(int i = 0; i < numQuiz; ++i) {
         rapidxml::xml_node<>* questionClozeNode = XMLParser::AppendNode(doc, rootNode, "question");
@@ -456,12 +604,12 @@ void MainFrame::ExportXMLToFile(int numQuiz, wxString catName, wxString path)
 
         rapidxml::xml_node<>* feedbackNode = XMLParser::AppendNode(doc, questionClozeNode, "generalfeedback");
         XMLParser::SetNodeAttribute(doc, feedbackNode, "format", "html");
-        rapidxml::xml_node<>* feedbackTextCloze = XMLParser::AppendNode(doc, feedbackNode, "text");
+        XMLParser::AppendNode(doc, feedbackNode, "text");
         rapidxml::xml_node<>* penaltyNode = XMLParser::AppendNode(doc, questionClozeNode, "penalty");
         XMLParser::SetNodeValue(doc, penaltyNode, "0.3333333");
         rapidxml::xml_node<>* hiddenNode = XMLParser::AppendNode(doc, questionClozeNode, "hidden");
         XMLParser::SetNodeValue(doc, hiddenNode, "0");
-        rapidxml::xml_node<>* idNumberNode = XMLParser::AppendNode(doc, questionClozeNode, "idnumber");
+        XMLParser::AppendNode(doc, questionClozeNode, "idnumber");
     }
 
     std::ofstream writeXML(path.mb_str());
@@ -512,11 +660,6 @@ void MainFrame::GenerateNewRandomInputValues()
             }
         }
     }
-
-    // Set random values
-    for(auto& tag : m_ioTagList) {
-        tag.value = GetRandom(tag.start, tag.end);
-    }
 }
 
 bool MainFrame::CalculateOutputs(bool useInputValue)
@@ -547,18 +690,16 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
                 str = afterF;
             }
 
-            // Fill inputs with std values
+            // Fill inputs with std or values
             bool first = true;
             for(auto& in : inputs) {
                 if(!first) {
                     for(auto tagTable : m_ioTagTable) {
                         if(in == tagTable.name) {
                             if(useInputValue)
-                                in = wxString::FromCDouble(tagTable.value);
+                                in = wxString::FromCDouble(tagTable.value, tagTable.decimalPlaces);
                             else
-                                in = wxString::FromCDouble(tagTable.stdValue);
-                            // SendToConsole(wxString::FromCDouble(GetRandom(tagTable.start, tagTable.end),
-                            // tagTable.decimalPlaces));
+                                in = wxString::FromCDouble(tagTable.stdValue, tagTable.decimalPlaces);
                         }
                     }
                 } else {
@@ -594,7 +735,7 @@ wxString MainFrame::GetHTMLFromCurrentIOs()
         wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
         wxString strToReplace = "[[" + ioStr + tag.name + "]]";
         if(tag.type == IOTagType::input)
-            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value, tag.decimalPlaces));
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value, tag.decimalPlaces));
         else
             htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
     }
@@ -602,6 +743,46 @@ wxString MainFrame::GetHTMLFromCurrentIOs()
 
     return htmlCode;
 }
+
+wxString MainFrame::FormatHTMLAnswers(wxString unformatedHTML)
+{
+    wxString formatedHTML = unformatedHTML;
+    wxStringTokenizer tokenizer(unformatedHTML, "{}");
+    while(tokenizer.HasMoreTokens()) {
+        wxString token = tokenizer.GetNextToken();
+        if(token.Find(":NUMERICAL:") != wxNOT_FOUND) {
+            wxStringTokenizer clozeTkn(token, ":");
+            std::vector<wxString> clozeValues;
+            while(clozeTkn.HasMoreTokens()) {
+                clozeValues.push_back(clozeTkn.GetNextToken());
+            }
+            if(clozeValues.size() != 4) {
+                SendToConsole(wxString::Format(wxT("ATENÇÃO! Resposta da questão cloze \"%s\" inserida "
+                                                   "incorretamente.\n\tNão foi possível formatar o preview."),
+                                  token),
+                    wxColour(255, 255, 0));
+                return unformatedHTML;
+            }
+
+            wxString notaTol = wxString::Format(wxT("Nota = %s; Tolerância = %s"), clozeValues[0], clozeValues[3]);
+            wxString response = clozeValues[2];
+            if(response.Replace('=', "") == 0) {
+                SendToConsole(wxString::Format(wxT("ATENÇÃO! Não foi inserido o '=' na resposta da questão cloze "
+                                                   "\"%s\".\n\tNão foi possível formatar o preview."),
+                                  token),
+                    wxColour(255, 255, 0));
+                return unformatedHTML;
+            }
+            wxString replaceToStr = "<input type = \"text\" style=\"text-align:center;\" data-toggle=\"tooltip\" "
+                                    "data-placement=\"top\" title=\"" +
+                notaTol + "\" placeholder = \"" + response + "\">";
+            formatedHTML.Replace("{" + token + "}", replaceToStr);
+        }
+    }
+
+    return formatedHTML;
+}
+
 void MainFrame::OnOpenClick(wxCommandEvent& event)
 {
     wxFileDialog openFileDialog(
@@ -612,6 +793,7 @@ void MainFrame::OnOpenClick(wxCommandEvent& event)
     wxTextFile file(openFileDialog.GetPath());
     OpenFile(file);
     FormatHTML();
+    m_notebookMain->SetSelection(0);
 }
 void MainFrame::OnSaveAsClick(wxCommandEvent& event)
 {
@@ -713,9 +895,9 @@ void MainFrame::OpenFile(wxTextFile& file)
                 double start, end, stdValue;
 
                 ioStrs[0].ToLong(&typeID);
-                ioStrs[2].ToDouble(&start);
-                ioStrs[3].ToDouble(&end);
-                ioStrs[4].ToDouble(&stdValue);
+                ioStrs[2].ToCDouble(&start);
+                ioStrs[3].ToCDouble(&end);
+                ioStrs[4].ToCDouble(&stdValue);
                 ioStrs[5].ToLong(&decimalPlaces);
                 ioStrs[6].ToLong(&startPos);
                 ioStrs[7].ToLong(&endPos);
@@ -726,7 +908,7 @@ void MainFrame::OpenFile(wxTextFile& file)
                 newTag.end = end;
                 newTag.stdValue = stdValue;
                 newTag.decimalPlaces = decimalPlaces;
-                newTag.position = std::make_pair<int>(startPos, endPos);
+                newTag.position = std::make_pair<int>(static_cast<int>(startPos), static_cast<int>(endPos));
 
                 m_ioTagList.push_back(newTag);
 
@@ -790,8 +972,8 @@ void MainFrame::OAboutRibbonClick(wxRibbonButtonBarEvent& event)
     wxAboutDialogInfo info;
     info.AddDeveloper(wxT("Thales Lima Oliveira"));
     info.SetLicence(wxT("GPL v2"));
-    info.SetDescription(
-        wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from www.flaticon.com"));
+    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from "
+                            "www.flaticon.com\nThis application uses the WebView2 SDK"));
     info.SetName(wxT("Gerador de questões"));
     ::wxAboutBox(info);
 }
@@ -880,6 +1062,7 @@ void MainFrame::OnOpenRibbonClick(wxRibbonButtonBarEvent& event)
     wxTextFile file(openFileDialog.GetPath());
     OpenFile(file);
     FormatHTML();
+    m_notebookMain->SetSelection(0);
 }
 void MainFrame::OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
 {
@@ -890,26 +1073,45 @@ void MainFrame::OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
         wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
         wxString strToReplace = "[[" + ioStr + tag.name + "]]";
         if(tag.type == IOTagType::input) {
-            htmlCode.Replace(strToReplace,
-                "<b><span style=\"background-color: #FFFF00\">" +
-                    wxString::FromDouble(tag.stdValue, tag.decimalPlaces) + "</span></b>");
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue, tag.decimalPlaces));
         } else {
-            htmlCode.Replace(strToReplace,
-                "<b><span style=\"background-color: #FFFF00\">" + wxString::FromDouble(tag.value) + "</span></b>");
+            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
         }
     }
+    htmlCode = FormatHTMLAnswers(htmlCode);
+    // MathJax
+    wxString mathJaxScript =
+        "<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n<script id=\"MathJax-script\" "
+        "async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>";
+
+    wxString bootstrapCSS =
+        "<link rel = \"stylesheet\" href = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css\">";
+    wxString jquery = "<script src = \"https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js\"></script>";
+    wxString bootstrap =
+        "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js\">< / script>";
+    wxString enableTootip =
+        "<script>\n$(document).ready(function() {\n$('[data-toggle=\"tooltip\"]').tooltip();\n});\n</script>";
+
+    // wxString bootstrapScript = "<script src = \"https://code.jquery.com/jquery-3.2.1.slim.min.js\" integrity =
+    // \"sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN\" crossorigin = \"anonymous\">< /
+    // script>\n "
+    //    "<script src = \"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js\" integrity =
+    //    \"sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q\" crossorigin = \"anonymous\">< /
+    //    script>\n "
+    //    "<script src = \"https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js\" integrity =
+    //    \"sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl\" crossorigin = \"anonymous\">< /
+    //    script>\"";
 
     // head with scripts
     wxString head = "<head>\n";
 
-    head += "<link rel=\"stylesheet\" type=\"text/css\" "
-            "href=\"https://moodle.ifg.edu.br/theme/styles.php/academi/1616615844_1/all\" />\n";
-    // MathJax (fail in wxWebView)
-    // head += "<script src=\"https://polyfill.io/v3/polyfill.min.js?features=es6\"></script>\n<script
-    // id=\"MathJax-script\" async\nsrc=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>";
-    head += "</head>";
+    // Moodle IFG stylesheet
+    // head += "<link rel=\"stylesheet\" type=\"text/css\" "
+    //        "href=\"https://moodle.ifg.edu.br/theme/styles.php/academi/1616615844_1/all\" />\n";
 
-    m_webViewPreview->SetPage("<html>" + head + "<body>" + htmlCode + "</body></html>", "");
+    head += bootstrapCSS + "\n" + jquery + "\n" + bootstrap + "" + mathJaxScript + "\n";
+    head += "</head>";
+    m_webViewPreview->SetPage("<html>" + head + "<body>" + htmlCode + enableTootip + "</body></html>", "");
 
     m_notebookMain->SetSelection(1);
 }
@@ -979,8 +1181,9 @@ void MainFrame::OnNewClick(wxCommandEvent& event)
 
     m_ioTagList.clear();
     m_ioTagTable.clear();
-    
+
     m_webViewPreview->SetPage("<html><body></body></html>", "");
+    m_notebookMain->SetSelection(0);
 
     FillTable();
 }
@@ -998,8 +1201,9 @@ void MainFrame::OnNewRibbonClick(wxRibbonButtonBarEvent& event)
 
     m_ioTagList.clear();
     m_ioTagTable.clear();
-    
+
     m_webViewPreview->SetPage("<html><body></body></html>", "");
+    m_notebookMain->SetSelection(0);
 
     FillTable();
 }

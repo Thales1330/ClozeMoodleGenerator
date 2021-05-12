@@ -77,6 +77,7 @@ protected:
     void GenerateNewRandomInputValues();
     bool CalculateOutputs(bool useInputValue = true);
     wxString GetHTMLFromCurrentIOs();
+    wxString FormatHTMLAnswers(wxString unformatedHTML);
     
     wxRibbonMetroArtProvider* m_artMetro = nullptr;
     

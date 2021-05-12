@@ -38,7 +38,7 @@ public:
         wxLocale* locale = new wxLocale();
         locale->Init(locale->GetSystemLanguage(), wxLOCALE_LOAD_DEFAULT);
 
-        MainFrame* mainFrame = new MainFrame(NULL);
+        MainFrame* mainFrame = new MainFrame(nullptr);
         SetTopWindow(mainFrame);
         mainFrame->SetIcon(wxICON(aaaa));
         return GetTopWindow()->Show();

@@ -23,7 +23,7 @@
       <File Name="rapidXML/rapidxml.hpp"/>
     </VirtualDirectory>
     <File Name="pyhelper.h"/>
-    <File Name="STDCapture.h"/>
+    <File Name="STDCapture.h" ExcludeProjConfig="Release;"/>
     <File Name="HTMLPreview.h"/>
     <File Name="MainFrame.h"/>
     <File Name="wxcrafter.h"/>
@@ -89,13 +89,13 @@
         <Preprocessor Value="NDEBUG"/>
         <Preprocessor Value="UNICODE"/>
       </Compiler>
-      <Linker Options="$(shell wx-config --libs std,aui,stc,webview,adv,ribbon);-static;-limm32" Required="yes">
+      <Linker Options="-mwindows;$(shell wx-config --libs std,aui,stc,webview,adv,ribbon);-static;-limm32" Required="yes">
         <LibraryPath Value="C:\Users\Pichau\AppData\Local\Programs\Python\Python39-32\libs"/>
         <LibraryPath Value="C:\Users\thale\AppData\Local\Programs\Python\Python39-32\libs"/>
         <Library Value="python39"/>
       </Linker>
       <ResourceCompiler Options="$(shell wx-config --rcflags)" Required="no"/>
-      <General OutputFile="$(ProjectName)" IntermediateDirectory="" Command="$(WorkspacePath)/build-$(WorkspaceConfiguration)/bin/$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(WorkspacePath)/build-$(WorkspaceConfiguration)/lib" PauseExecWhenProcTerminates="no" IsGUIProgram="yes" IsEnabled="yes"/>
+      <General OutputFile="$(ProjectName)" IntermediateDirectory="" Command="$(WorkspacePath)/build-$(WorkspaceConfiguration)/bin/$(OutputFile)" CommandArguments="" UseSeparateDebugArgs="no" DebugArguments="" WorkingDirectory="$(WorkspacePath)/build-$(WorkspaceConfiguration)/lib" PauseExecWhenProcTerminates="yes" IsGUIProgram="yes" IsEnabled="yes"/>
       <BuildSystem Name="CodeLite Makefile Generator"/>
       <Environment EnvVarSetName="&lt;Use Defaults&gt;" DbgSetName="&lt;Use Defaults&gt;">
         <![CDATA[]]>
