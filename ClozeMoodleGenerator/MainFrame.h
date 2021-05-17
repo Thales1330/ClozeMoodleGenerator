@@ -15,7 +15,8 @@
 enum class IOTagType
 {
     input,
-    output
+    output,
+    equal
 };
 
 struct IOTag
@@ -28,7 +29,10 @@ struct IOTag
     double end = 0.0;
     double stdValue = 0.0;
     int decimalPlaces = 2;
+    wxString valueType = "double";
     double value = 0.0;
+    int valueInt = 0;
+    wxString valueStr = "";
 };
 
 
@@ -41,6 +45,9 @@ public:
     void OnExit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
 protected:
+    virtual void OnMainFrameIdle(wxIdleEvent& event);
+    virtual void OnSTCHTMLChanged(wxStyledTextEvent& event);
+    virtual void OnSTCPythonChanged(wxStyledTextEvent& event);
     virtual void OnNewRibbonClick(wxRibbonButtonBarEvent& event);
     virtual void OnNewClick(wxCommandEvent& event);
     virtual void OnWindowClose(wxCloseEvent& event);
@@ -61,12 +68,10 @@ protected:
     virtual void OnCellDataChanged(wxGridEvent& event);
     virtual void OnLeftClick(wxGridEvent& event);
     virtual void OnIndicatorClick(wxStyledTextEvent& event);
-    virtual void GetInput(wxCommandEvent& event);
-    virtual void OnPreviewClick(wxCommandEvent& event);
-    virtual void OnIntClick(wxCommandEvent& event);
+
     void SendToConsole(wxString str, wxColour textColour = wxColour(255, 255, 255));
-    PyObject* LoadPyModule(wxCStrData script, std::vector<wxString> &errors);
-    void RunPythonScript(std::vector<wxString> inputs, PyObject* pModule, double &returnValue, std::vector<wxString> &errors);
+    PyObject* LoadPyModule(const wxString& script, std::vector<wxString> &errors);
+    void RunPythonScript(std::vector<wxString> inputs, PyObject* pModule, IOTag &tag, std::vector<wxString> &errors);
     void FillTable();
     void ExportXMLToFile(int numQuiz, wxString catName, wxString path);
     double GetRandom(double init, double end);
@@ -78,6 +83,13 @@ protected:
     bool CalculateOutputs(bool useInputValue = true);
     wxString GetHTMLFromCurrentIOs();
     wxString FormatHTMLAnswers(wxString unformatedHTML);
+
+    void CreateNewCloze();
+    void SaveFile(const bool& saveAs = false);
+    void OpenFile();
+    void ShowAbout();
+
+    void SaveIsNeeded(bool isNeeded = true);
     
     wxRibbonMetroArtProvider* m_artMetro = nullptr;
     
@@ -87,11 +99,14 @@ protected:
     
     std::vector<IOTag> m_ioTagList;
     std::vector<IOTag> m_ioTagTable;
-    int m_highlightID = wxID_ANY;
+    //int m_highlightID = wxID_ANY;
     
     std::default_random_engine m_rndGenerator;
     
     // File
     wxString m_filePath = "";
+    wxString m_fileName = "";
+    bool m_saveIsNeeded = false;
+    bool m_justOpenned = true;
 };
 #endif // MAINFRAME_H

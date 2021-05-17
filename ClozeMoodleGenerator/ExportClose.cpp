@@ -7,6 +7,8 @@ ExportClose::ExportClose(wxWindow* parent)
 {
     SetTitle(wxT("Exportar questões"));
     m_staticTextNumQuiz->SetLabel(wxT("Número de questões"));
+    SetSize(GetBestSize());
+    Layout();
 }
 
 ExportClose::~ExportClose()

@@ -7,7 +7,6 @@
 #ifndef _CLOZEMOODLEGENERATOR_CLOZEMOODLEGENERATOR_WXCRAFTER_BASE_CLASSES_H
 #define _CLOZEMOODLEGENERATOR_CLOZEMOODLEGENERATOR_WXCRAFTER_BASE_CLASSES_H
 
-// clang-format off
 #include <wx/settings.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/xrc/xh_bmp.h>
@@ -48,7 +47,6 @@
 #define WXC_FROM_DIP(x) x
 #endif
 
-// clang-format on
 
 class MainFrameBaseClass : public wxFrame
 {
@@ -85,150 +83,50 @@ protected:
     wxMenuItem* m_menuItemAbout;
 
 protected:
-    virtual void OnWindowClose(wxCloseEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnNewRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnSaveRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnOpenRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnExportRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnQuitRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnRunPyRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OAboutRibbonClick(wxRibbonButtonBarEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnIndicatorClick(wxStyledTextEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnMarginClick(wxStyledTextEvent& event)
-    {
-        event.Skip();
-    }
-#if wxUSE_WEBVIEW
-#endif // wxUSE_WEBVIEW
-    virtual void OnCellDataChanged(wxGridEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnLeftClick(wxGridEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnNewClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnSaveClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnSaveAsClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnOpenClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnExportClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnExit(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnAbout(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
+    virtual void OnWindowClose(wxCloseEvent& event) { event.Skip(); }
+    virtual void OnMainFrameIdle(wxIdleEvent& event) { event.Skip(); }
+    virtual void OnNewRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnSaveRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnOpenRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnExportRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnQuitRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnGetInputRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnRunPyRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnPreviewRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OAboutRibbonClick(wxRibbonButtonBarEvent& event) { event.Skip(); }
+    virtual void OnIndicatorClick(wxStyledTextEvent& event) { event.Skip(); }
+    virtual void OnMarginClick(wxStyledTextEvent& event) { event.Skip(); }
+    virtual void OnSTCHTMLChanged(wxStyledTextEvent& event) { event.Skip(); }
+    #if wxUSE_WEBVIEW
+    #endif // wxUSE_WEBVIEW
+    virtual void OnSTCPythonChanged(wxStyledTextEvent& event) { event.Skip(); }
+    virtual void OnCellDataChanged(wxGridEvent& event) { event.Skip(); }
+    virtual void OnLeftClick(wxGridEvent& event) { event.Skip(); }
+    virtual void OnNewClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnSaveClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnSaveAsClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnOpenClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnExportClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnExit(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnAbout(wxCommandEvent& event) { event.Skip(); }
 
 public:
-    wxRibbonBar* GetRibbonBarMain()
-    {
-        return m_ribbonBarMain;
-    }
-    wxStyledTextCtrl* GetStcHTML()
-    {
-        return m_stcHTML;
-    }
-    wxPanel* GetPanelHTML()
-    {
-        return m_panelHTML;
-    }
-    wxWebView* GetWebViewPreview()
-    {
-        return m_webViewPreview;
-    }
-    wxPanel* GetPanelPreview()
-    {
-        return m_panelPreview;
-    }
-    wxNotebook* GetNotebookMain()
-    {
-        return m_notebookMain;
-    }
-    wxStyledTextCtrl* GetStcPython()
-    {
-        return m_stcPython;
-    }
-    wxGrid* GetGridInputs()
-    {
-        return m_gridInputs;
-    }
-    wxRichTextCtrl* GetRichTextCtrlConsole()
-    {
-        return m_richTextCtrlConsole;
-    }
-    wxPanel* GetMainPanel()
-    {
-        return m_mainPanel;
-    }
-    wxMenuBar* GetMenuBar()
-    {
-        return m_menuBar;
-    }
-    MainFrameBaseClass(wxWindow* parent,
-        wxWindowID id = wxID_ANY,
-        const wxString& title = wxT("Cloze generator"),
-        const wxPoint& pos = wxDefaultPosition,
-        const wxSize& size = wxSize(1280, 720),
-        long style = wxCAPTION | wxRESIZE_BORDER | wxMAXIMIZE_BOX | wxMINIMIZE_BOX | wxSYSTEM_MENU | wxCLOSE_BOX);
+    wxRibbonBar* GetRibbonBarMain() { return m_ribbonBarMain; }
+    wxStyledTextCtrl* GetStcHTML() { return m_stcHTML; }
+    wxPanel* GetPanelHTML() { return m_panelHTML; }
+    wxWebView* GetWebViewPreview() { return m_webViewPreview; }
+    wxPanel* GetPanelPreview() { return m_panelPreview; }
+    wxNotebook* GetNotebookMain() { return m_notebookMain; }
+    wxStyledTextCtrl* GetStcPython() { return m_stcPython; }
+    wxGrid* GetGridInputs() { return m_gridInputs; }
+    wxRichTextCtrl* GetRichTextCtrlConsole() { return m_richTextCtrlConsole; }
+    wxPanel* GetMainPanel() { return m_mainPanel; }
+    wxMenuBar* GetMenuBar() { return m_menuBar; }
+    MainFrameBaseClass(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Cloze generator"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(1280,720), long style = wxCAPTION|wxRESIZE_BORDER|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxSYSTEM_MENU|wxCLOSE_BOX);
     virtual ~MainFrameBaseClass();
 };
+
 
 class HTMLPreviewBase : public wxFrame
 {
@@ -237,23 +135,17 @@ protected:
     wxWebView* m_webView;
 #endif // wxUSE_WEBVIEW
 
+
 protected:
-#if wxUSE_WEBVIEW
-#endif // wxUSE_WEBVIEW
+    #if wxUSE_WEBVIEW
+    #endif // wxUSE_WEBVIEW
 
 public:
-    wxWebView* GetWebView()
-    {
-        return m_webView;
-    }
-    HTMLPreviewBase(wxWindow* parent,
-        wxWindowID id = wxID_ANY,
-        const wxString& title = wxT("Preview"),
-        const wxPoint& pos = wxDefaultPosition,
-        const wxSize& size = wxSize(800, 600),
-        long style = wxDEFAULT_FRAME_STYLE);
+    wxWebView* GetWebView() { return m_webView; }
+    HTMLPreviewBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Preview"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(800,600), long style = wxDEFAULT_FRAME_STYLE);
     virtual ~HTMLPreviewBase();
 };
+
 
 class ExportCloseBase : public wxDialog
 {
@@ -266,46 +158,17 @@ protected:
     wxButton* m_buttonCancel;
 
 protected:
-    virtual void OnExportClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
-    virtual void OnCancelClick(wxCommandEvent& event)
-    {
-        event.Skip();
-    }
+    virtual void OnExportClick(wxCommandEvent& event) { event.Skip(); }
+    virtual void OnCancelClick(wxCommandEvent& event) { event.Skip(); }
 
 public:
-    wxStaticText* GetStaticTextCatName()
-    {
-        return m_staticTextCatName;
-    }
-    wxTextCtrl* GetTextCtrlCatName()
-    {
-        return m_textCtrlCatName;
-    }
-    wxStaticText* GetStaticTextNumQuiz()
-    {
-        return m_staticTextNumQuiz;
-    }
-    wxTextCtrl* GetTextCtrlNumQuiz()
-    {
-        return m_textCtrlNumQuiz;
-    }
-    wxButton* GetButtonExportar()
-    {
-        return m_buttonExportar;
-    }
-    wxButton* GetButtonCancel()
-    {
-        return m_buttonCancel;
-    }
-    ExportCloseBase(wxWindow* parent,
-        wxWindowID id = wxID_ANY,
-        const wxString& title = wxT("Exportar questões"),
-        const wxPoint& pos = wxDefaultPosition,
-        const wxSize& size = wxSize(500, 300),
-        long style = wxDEFAULT_DIALOG_STYLE);
+    wxStaticText* GetStaticTextCatName() { return m_staticTextCatName; }
+    wxTextCtrl* GetTextCtrlCatName() { return m_textCtrlCatName; }
+    wxStaticText* GetStaticTextNumQuiz() { return m_staticTextNumQuiz; }
+    wxTextCtrl* GetTextCtrlNumQuiz() { return m_textCtrlNumQuiz; }
+    wxButton* GetButtonExportar() { return m_buttonExportar; }
+    wxButton* GetButtonCancel() { return m_buttonCancel; }
+    ExportCloseBase(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Exportar questões"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(-1,-1), long style = wxDEFAULT_DIALOG_STYLE);
     virtual ~ExportCloseBase();
 };
 

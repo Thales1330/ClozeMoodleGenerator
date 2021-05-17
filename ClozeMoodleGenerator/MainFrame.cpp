@@ -20,16 +20,21 @@ namespace emb
 //
 // Blog article: http://mateusz.loskot.net/?p=2819
 
+typedef std::function<void(std::string)> stderr_write_type;
 typedef std::function<void(std::string)> stdout_write_type;
+
+struct Stderr {
+    PyObject_HEAD stderr_write_type write;
+};
 
 struct Stdout {
     PyObject_HEAD stdout_write_type write;
 };
 
-PyObject* Stdout_write(PyObject* self, PyObject* args)
+PyObject* Stderr_write(PyObject* self, PyObject* args)
 {
     std::size_t written(0);
-    Stdout* selfimpl = reinterpret_cast<Stdout*>(self);
+    Stderr* selfimpl = reinterpret_cast<Stderr*>(self);
     if(selfimpl->write) {
         char* data;
         if(!PyArg_ParseTuple(args, "s", &data))
@@ -42,20 +47,47 @@ PyObject* Stdout_write(PyObject* self, PyObject* args)
     return PyLong_FromSize_t(written);
 }
 
+PyObject* Stdout_write(PyObject* self, PyObject* args)
+{
+    std::size_t written(0);
+    Stdout* selfimpl = reinterpret_cast<Stdout*>(self);
+    if (selfimpl->write) {
+        char* data;
+        if (!PyArg_ParseTuple(args, "s", &data))
+            return 0;
+
+        std::string str(data);
+        selfimpl->write(str);
+        written = str.size();
+    }
+    return PyLong_FromSize_t(written);
+}
+
+PyObject* Stderr_flush(PyObject* self, PyObject* args)
+{
+    // no-op
+    return Py_BuildValue("");
+}
+
 PyObject* Stdout_flush(PyObject* self, PyObject* args)
 {
     // no-op
     return Py_BuildValue("");
 }
 
-PyMethodDef Stdout_methods[] = {
-    { "write", Stdout_write, METH_VARARGS, "sys.stderr.write" },
-    { "flush", Stdout_flush, METH_VARARGS, "sys.stderr.flush" }, { 0, 0, 0, 0 } // sentinel
+PyMethodDef Stderr_methods[] = {
+    { "write", Stderr_write, METH_VARARGS, "sys.stderr.write" },
+    { "flush", Stderr_flush, METH_VARARGS, "sys.stderr.flush" }, { 0, 0, 0, 0 } // sentinel
 };
 
-PyTypeObject StdoutType = {
+PyMethodDef Stdout_methods[] = {
+{ "write", Stdout_write, METH_VARARGS, "sys.stdout.write" },
+{ "flush", Stdout_flush, METH_VARARGS, "sys.stdout.flush" }, { 0, 0, 0, 0 } // sentinel
+};
+
+PyTypeObject StderrType = {
     PyVarObject_HEAD_INIT(0, 0) "emb.StderrType", /* tp_name */
-    sizeof(Stdout),                               /* tp_basicsize */
+    sizeof(Stderr),                               /* tp_basicsize */
     0,                                            /* tp_itemsize */
     0,                                            /* tp_dealloc */
     0,                                            /* tp_print */
@@ -80,7 +112,7 @@ PyTypeObject StdoutType = {
     0,                                            /* tp_weaklistoffset */
     0,                                            /* tp_iter */
     0,                                            /* tp_iternext */
-    Stdout_methods,                               /* tp_methods */
+    Stderr_methods,                               /* tp_methods */
     0,                                            /* tp_members */
     0,                                            /* tp_getset */
     0,                                            /* tp_base */
@@ -93,6 +125,46 @@ PyTypeObject StdoutType = {
     0,                                            /* tp_new */
 };
 
+PyTypeObject StdoutType = {
+PyVarObject_HEAD_INIT(0, 0) "emb.StdoutType", /* tp_name */
+sizeof(Stdout),                               /* tp_basicsize */
+0,                                            /* tp_itemsize */
+0,                                            /* tp_dealloc */
+0,                                            /* tp_print */
+0,                                            /* tp_getattr */
+0,                                            /* tp_setattr */
+0,                                            /* tp_reserved */
+0,                                            /* tp_repr */
+0,                                            /* tp_as_number */
+0,                                            /* tp_as_sequence */
+0,                                            /* tp_as_mapping */
+0,                                            /* tp_hash  */
+0,                                            /* tp_call */
+0,                                            /* tp_str */
+0,                                            /* tp_getattro */
+0,                                            /* tp_setattro */
+0,                                            /* tp_as_buffer */
+Py_TPFLAGS_DEFAULT,                           /* tp_flags */
+"emb.Stdout objects",                         /* tp_doc */
+0,                                            /* tp_traverse */
+0,                                            /* tp_clear */
+0,                                            /* tp_richcompare */
+0,                                            /* tp_weaklistoffset */
+0,                                            /* tp_iter */
+0,                                            /* tp_iternext */
+Stdout_methods,                               /* tp_methods */
+0,                                            /* tp_members */
+0,                                            /* tp_getset */
+0,                                            /* tp_base */
+0,                                            /* tp_dict */
+0,                                            /* tp_descr_get */
+0,                                            /* tp_descr_set */
+0,                                            /* tp_dictoffset */
+0,                                            /* tp_init */
+0,                                            /* tp_alloc */
+0,                                            /* tp_new */
+};
+
 PyModuleDef embmodule = {
     PyModuleDef_HEAD_INIT,
     "emb",
@@ -102,42 +174,73 @@ PyModuleDef embmodule = {
 };
 
 // Internal state
+PyObject* g_stderr;
+PyObject* g_stderr_saved;
+
 PyObject* g_stdout;
 PyObject* g_stdout_saved;
 
 PyMODINIT_FUNC PyInit_emb(void)
 {
+    g_stderr = 0;
     g_stdout = 0;
+    g_stderr_saved = 0;
     g_stdout_saved = 0;
 
+    StderrType.tp_new = PyType_GenericNew;
+    if(PyType_Ready(&StderrType) < 0)
+        return 0;
+
     StdoutType.tp_new = PyType_GenericNew;
-    if(PyType_Ready(&StdoutType) < 0)
+    if (PyType_Ready(&StdoutType) < 0)
         return 0;
 
     PyObject* m = PyModule_Create(&embmodule);
     if(m) {
-        Py_INCREF(&StdoutType);
-        PyModule_AddObject(m, "Stderr", reinterpret_cast<PyObject*>(&StdoutType));
+        Py_INCREF(&StderrType);
+        PyModule_AddObject(m, "Stderr", reinterpret_cast<PyObject*>(&StderrType));
+        PyModule_AddObject(m, "Stdout", reinterpret_cast<PyObject*>(&StdoutType));
     }
     return m;
 }
 
+void set_stderr(stderr_write_type write)
+{
+    if(!g_stderr) {
+        g_stderr_saved = PySys_GetObject("stderr"); // borrowed
+        g_stderr = StderrType.tp_new(&StderrType, 0, 0);
+    }
+
+    Stderr* impl = reinterpret_cast<Stderr*>(g_stderr);
+    impl->write = write;
+    PySys_SetObject("stderr", g_stderr);
+}
+
 void set_stdout(stdout_write_type write)
 {
-    if(!g_stdout) {
-        g_stdout_saved = PySys_GetObject("stderr"); // borrowed
+    if (!g_stdout) {
+        g_stdout_saved = PySys_GetObject("stdout"); // borrowed
         g_stdout = StdoutType.tp_new(&StdoutType, 0, 0);
     }
 
     Stdout* impl = reinterpret_cast<Stdout*>(g_stdout);
     impl->write = write;
-    PySys_SetObject("stderr", g_stdout);
+    PySys_SetObject("stdout", g_stdout);
+}
+
+void reset_stderr()
+{
+    if(g_stderr_saved)
+        PySys_SetObject("stderr", g_stderr_saved);
+
+    Py_XDECREF(g_stderr);
+    g_stderr = 0;
 }
 
 void reset_stdout()
 {
-    if(g_stdout_saved)
-        PySys_SetObject("stderr", g_stdout_saved);
+    if (g_stdout_saved)
+        PySys_SetObject("stdout", g_stdout_saved);
 
     Py_XDECREF(g_stdout);
     g_stdout = 0;
@@ -151,10 +254,6 @@ MainFrame::MainFrame(wxWindow* parent)
     m_rndGenerator.seed(time(0));
     SetTitle(wxT("Gerador de questões"));
     SetSize(GetBestSize());
-
-    // m_webViewPreview->New(wxWebViewBackendIE);
-    // wxWebViewIE::MSWSetModernEmulationLevel();
-    // wxWebViewIE::MSWSetEmulationLevel(wxWEBVIEWIE_EMU_IE11);
 
     m_artMetro = new wxRibbonMetroArtProvider();
     m_ribbonBarMain->SetArtProvider(m_artMetro);
@@ -268,6 +367,8 @@ MainFrame::MainFrame(wxWindow* parent)
     PyImport_AppendInittab("emb", emb::PyInit_emb);
     Py_Initialize();
     PyImport_ImportModule("emb");
+
+    SaveIsNeeded(false);
 }
 
 MainFrame::~MainFrame()
@@ -283,18 +384,7 @@ void MainFrame::OnExit(wxCommandEvent& event)
 
 void MainFrame::OnAbout(wxCommandEvent& event)
 {
-
-    wxUnusedVar(event);
-    wxAboutDialogInfo info;
-    info.AddDeveloper(wxT("Thales Lima Oliveira"));
-    info.SetLicence(wxT("GPL v2"));
-    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from "
-                            "www.flaticon.com\nThis application uses the WebView2 SDK"));
-    info.SetName(wxT("Gerador de questões"));
-    ::wxAboutBox(info);
-}
-void MainFrame::OnIntClick(wxCommandEvent& event)
-{
+    ShowAbout();
 }
 
 void MainFrame::SendToConsole(wxString str, wxColour textColour)
@@ -315,20 +405,20 @@ void MainFrame::SendToConsole(wxString str, wxColour textColour)
     }
 }
 
-PyObject* MainFrame::LoadPyModule(wxCStrData script, std::vector<wxString>& errors)
+PyObject* MainFrame::LoadPyModule(const wxString &script, std::vector<wxString>& errors)
 {
     PyObject* pModule;
 
-    PyObject* pCompiledFn = Py_CompileString(script, "", Py_file_input);
+    PyObject* pCompiledFn = Py_CompileString(script.ToUTF8(), "", Py_file_input);
     pModule = PyImport_ExecCodeModule("strScript", pCompiledFn);
 
     if(pModule == nullptr) {
         std::string buffer;
         {
-            emb::stdout_write_type write = [&buffer](std::string s) { buffer += s; };
-            emb::set_stdout(write);
+            emb::stderr_write_type write = [&buffer](std::string s) { buffer += s; };
+            emb::set_stderr(write);
             PyErr_Print();
-            emb::reset_stdout();
+            emb::reset_stderr();
             errors.emplace_back(wxT("Falha ao carregar o módulo."));
         }
         errors.emplace_back(buffer);
@@ -340,63 +430,91 @@ PyObject* MainFrame::LoadPyModule(wxCStrData script, std::vector<wxString>& erro
 
 void MainFrame::RunPythonScript(std::vector<wxString> inputs,
     PyObject* pModule,
-    double& returnValue,
+    IOTag& tag,
     std::vector<wxString>& errors)
 {
     PyObject* pFunc;
     PyObject *pArgs, *pValue;
 
+    if(inputs[0] != "double" && inputs[0] != "str" && inputs[0] != "int")
+    {
+        inputs.emplace(inputs.begin(), "double");
+    }
+
     std::string buffer;
     {
-        emb::stdout_write_type write = [&buffer](std::string s) { buffer += s; };
-        emb::set_stdout(write);
+        emb::stderr_write_type write = [&buffer](std::string s) { buffer += s; };
+        emb::set_stderr(write);
 
         if(pModule != nullptr) {
-            pFunc = PyObject_GetAttrString(pModule, inputs[0]);
+            pFunc = PyObject_GetAttrString(pModule, inputs[1]);
             // pFunc is a new reference
 
             if(pFunc && PyCallable_Check(pFunc)) {
-                pArgs = PyTuple_New(inputs.size() - 1);
-                for(unsigned int i = 1; i < inputs.size(); ++i) {
+                pArgs = PyTuple_New(inputs.size() - 2);
+                for(unsigned int i = 2; i < inputs.size(); ++i) {
+                    bool conversionError = false;
                     double dValue = 0.0;
-                    if(!inputs[i].ToCDouble(&dValue)) {
+                    conversionError = !inputs[i].ToCDouble(&dValue);
+
+                    pValue = PyFloat_FromDouble(dValue);
+
+                    if (conversionError) {
                         Py_DECREF(pArgs);
-                        // Py_DECREF(pModule);
                         errors.emplace_back(wxT("Não foi possível converter o argumento."));
                         errors.emplace_back(wxString::Format(
-                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[0]));
-                        // captureErrorMsg.EndCapture();
-                        // errors.emplace_back(captureErrorMsg.GetCapture());
+                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[1]));
                         errors.emplace_back(buffer);
                         return;
                     }
-                    pValue = PyFloat_FromDouble(dValue);
-                    if(!pValue) {
+
+                    if (!pValue) {
                         Py_DECREF(pArgs);
-                        // Py_DECREF(pModule);
                         errors.emplace_back(wxString::Format(
-                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[0]));
-                        // captureErrorMsg.EndCapture();
-                        // errors.emplace_back(captureErrorMsg.GetCapture());
+                            wxT("Não foi possível converter o argumento da função \"%s\""), inputs[1]));
                         errors.emplace_back(buffer);
                         return;
                     }
+
                     // pValue reference stolen here:
-                    PyTuple_SetItem(pArgs, i - 1, pValue);
+                    PyTuple_SetItem(pArgs, i - 2, pValue);
                 }
-                pValue = PyObject_CallObject(pFunc, pArgs);
-                Py_DECREF(pArgs);
-                if(pValue != NULL) {
-                    returnValue = PyFloat_AsDouble(pValue);
+
+                // Run py function
+                std::string bufferOut;
+                {
+                    emb::stdout_write_type writeOut = [&bufferOut](std::string s2) { bufferOut += s2; };
+                    emb::set_stdout(writeOut);
+
+                    pValue = PyObject_CallObject(pFunc, pArgs);
+
+                    emb::reset_stdout();
+                    if(!bufferOut.empty())
+                        SendToConsole(wxString::Format(wxT("Mensagens da função %s:\n%s"), inputs[1], bufferOut));
+                    Py_DECREF(pArgs);
+                }
+
+
+                if(pValue != nullptr) {
+                    tag.valueType = inputs[0];
+
+                    if (inputs[0] == "double") {
+                        tag.value = PyFloat_AsDouble(pValue);
+                    } else if(inputs[0] == "int")
+                    {
+                        tag.valueInt = PyLong_AsLong(pValue);
+                    } else if (inputs[0] == "str")
+                    {
+                        tag.valueStr = PyUnicode_AsUTF8(pValue);
+                    }
+
                     Py_DECREF(pValue);
                 } else {
                     Py_DECREF(pFunc);
                     PyErr_Print();
-                    emb::reset_stdout();
+                    emb::reset_stderr();
                     errors.emplace_back(
-                        wxString::Format(wxT("Não foi possível obter resposta da função \"%s\""), inputs[0]));
-                    // captureErrorMsg.EndCapture();
-                    // errors.emplace_back(captureErrorMsg.GetCapture());
+                        wxString::Format(wxT("Não foi possível obter resposta da função \"%s\""), inputs[1]));
                     errors.emplace_back(buffer);
                     return;
                 }
@@ -404,36 +522,25 @@ void MainFrame::RunPythonScript(std::vector<wxString> inputs,
                 if(PyErr_Occurred()) {
                     PyErr_Print();
                 }
-                emb::reset_stdout();
-                errors.emplace_back(wxString::Format(wxT("Função \"%s\" não encontrada."), inputs[0]));
+                emb::reset_stderr();
+                errors.emplace_back(wxString::Format(wxT("Função \"%s\" não encontrada."), inputs[1]));
+                errors.emplace_back(buffer);
             }
             Py_XDECREF(pFunc);
 
         } else {
             PyErr_Print();
-            emb::reset_stdout();
+            emb::reset_stderr();
             errors.emplace_back(wxT("Falha ao carregar o módulo."));
-            // captureErrorMsg.EndCapture();
-            // errors.emplace_back(captureErrorMsg.GetCapture());
             errors.emplace_back(buffer);
             return;
         }
+        emb::reset_stderr();
     }
 
-    // captureErrorMsg.EndCapture();
-    // errors.emplace_back(captureErrorMsg.GetCapture());
     errors.emplace_back(buffer);
 }
-void MainFrame::GetInput(wxCommandEvent& event)
-{
-}
-void MainFrame::OnPreviewClick(wxCommandEvent& event)
-{
 
-    // auto preview = new HTMLPreview(this, htmlCode);
-    // preview->Show();
-    // preview->Maximize();
-}
 void MainFrame::OnIndicatorClick(wxStyledTextEvent& event)
 {
     int pos = event.GetPosition();
@@ -448,9 +555,26 @@ void MainFrame::OnIndicatorClick(wxStyledTextEvent& event)
                 wxString::Format(wxT("Entrada: %s\n\tPos = (%d, %d)\n\tInicial = %f, Final = %f, Padrão = %f, CD = %d"),
                     tagClick.name, tagClick.position.first, tagClick.position.second, tagClick.start, tagClick.end,
                     tagClick.stdValue, tagClick.decimalPlaces));
-        } else {
-            SendToConsole(wxString::Format(wxT("Saída: %s\n\tPos = (%d, %d)\n\tResultado = %f"), tagClick.name,
-                tagClick.position.first, tagClick.position.second, tagClick.value));
+        }
+        else if (tagClick.type == IOTagType::output) {
+            if (tagClick.valueType == "double") {
+                SendToConsole(wxString::Format(wxT("Saída: %s\n\tPos = (%d, %d)\n\tResultado (double) = %f"), tagClick.name,
+                    tagClick.position.first, tagClick.position.second, tagClick.value));
+            }
+            else if (tagClick.valueType == "int") {
+                SendToConsole(wxString::Format(wxT("Saída: %s\n\tPos = (%d, %d)\n\tResultado (int) = %d"), tagClick.name,
+                    tagClick.position.first, tagClick.position.second, tagClick.valueInt));
+            }
+            else if (tagClick.valueType == "str") {
+                SendToConsole(wxString::Format(wxT("Saída: %s\n\tPos = (%d, %d)\n\tResultado (str) = %s"), tagClick.name,
+                    tagClick.position.first, tagClick.position.second, tagClick.valueStr));
+            }
+        }
+        else if (tagClick.type == IOTagType::equal) {
+            SendToConsole(
+                wxString::Format(wxT("Igual: %s\n\tPos = (%d, %d)\n\tPadrão = %f, CD = %d"),
+                    tagClick.name, tagClick.position.first, tagClick.position.second,
+                    tagClick.stdValue, tagClick.decimalPlaces));
         }
     }
 
@@ -468,6 +592,7 @@ void MainFrame::FillTable()
 {
     m_gridInputs->DeleteRows(0, m_gridInputs->GetNumberRows());
 
+    // If the new input (or equal) have the same name as old table list, inherit the old parameters
     std::vector<IOTag> newInTagList;
     for(auto& currentTag : m_ioTagList) {
         if(currentTag.type == IOTagType::input) {
@@ -481,6 +606,18 @@ void MainFrame::FillTable()
                 }
             }
             newInTagList.push_back(currentTag);
+        }
+        else if (currentTag.type == IOTagType::equal) {
+            for (const auto& tableTag : m_ioTagTable)
+            {
+                // Same name as input type
+                if (currentTag.name == tableTag.name)
+                {
+                    currentTag.value = tableTag.value;
+                    currentTag.stdValue = tableTag.stdValue;
+                    currentTag.decimalPlaces = tableTag.decimalPlaces;
+                }
+            }
         }
     }
     m_ioTagTable.clear();
@@ -509,14 +646,14 @@ void MainFrame::OnCellDataChanged(wxGridEvent& event)
             if(tag.name == m_gridInputs->GetCellValue(i, 0)) {
                 // Get new values
                 if(!m_gridInputs->GetCellValue(i, 1).ToDouble(&tag.start))
-                    SendToConsole(wxString::Format(wxT("Impossível converter valor da célula (%d, 1)"), i));
+                    SendToConsole(wxString::Format(wxT("Impossível converter valor \"%s\" da célula (%d, 2) na coluna \"Inicial\"."), m_gridInputs->GetCellValue(i, 1), i + 1), wxColour(255, 255, 0));
                 if(!m_gridInputs->GetCellValue(i, 2).ToDouble(&tag.end))
-                    SendToConsole(wxString::Format(wxT("Impossível converter valor da célula (%d, 2)"), i));
+                    SendToConsole(wxString::Format(wxT("Impossível converter valor \"%s\" da célula (%d, 3) na coluna \"Final\"."), m_gridInputs->GetCellValue(i, 2), i + 1), wxColour(255, 255, 0));
                 if(!m_gridInputs->GetCellValue(i, 3).ToDouble(&tag.stdValue))
-                    SendToConsole(wxString::Format(wxT("Impossível converter valor da célula (%d, 3)"), i));
+                    SendToConsole(wxString::Format(wxT("Impossível converter valor \"%s\" da célula (%d, 4) na coluna \"Padrão\"."), m_gridInputs->GetCellValue(i, 3), i + 1), wxColour(255, 255, 0));
                 long int dp = 0;
                 if(!m_gridInputs->GetCellValue(i, 4).ToLong(&dp))
-                    SendToConsole(wxString::Format(wxT("Impossível converter valor da célula (%d, 4)"), i));
+                    SendToConsole(wxString::Format(wxT("Impossível converter valor \"%s\" da célula (%d, 5) na coluna \"Casas decimais\"."), m_gridInputs->GetCellValue(i, 4), i + 1), wxColour(255, 255, 0));
                 else
                     tag.decimalPlaces = dp;
             }
@@ -526,7 +663,7 @@ void MainFrame::OnCellDataChanged(wxGridEvent& event)
     // Update main list
     for(auto& currentTag : m_ioTagList) {
         if(currentTag.type == IOTagType::input) {
-            for(auto tableTag : m_ioTagTable) {
+            for(const auto& tableTag : m_ioTagTable) {
                 if(currentTag.name == tableTag.name) {
                     currentTag.start = tableTag.start;
                     currentTag.end = tableTag.end;
@@ -535,8 +672,22 @@ void MainFrame::OnCellDataChanged(wxGridEvent& event)
                 }
             }
         }
+        else if (currentTag.type == IOTagType::equal) {
+            for (const auto& tableTag : m_ioTagTable)
+            {
+                 // Same name as input type
+                 if (currentTag.name == tableTag.name)
+                 {
+                     currentTag.value = tableTag.value;
+                     currentTag.stdValue = tableTag.stdValue;
+                     currentTag.decimalPlaces = tableTag.decimalPlaces;
+                 }
+            }
+        }
     }
 
+    if (!m_saveIsNeeded)
+        SaveIsNeeded();
     event.Skip();
 }
 
@@ -667,7 +818,7 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
     std::vector<wxString> errors;
     bool noError = true;
 
-    auto* pModule = LoadPyModule(m_stcPython->GetText().c_str(), errors);
+    auto* pModule = LoadPyModule(m_stcPython->GetText(), errors);
 
     for(auto error : errors) {
         if(error != "") {
@@ -707,20 +858,32 @@ bool MainFrame::CalculateOutputs(bool useInputValue)
                 }
             }
 
-            double response = 0.0;
-            RunPythonScript(inputs, pModule, response, errors);
+            RunPythonScript(inputs, pModule, tag, errors);
 
-            for(auto error : errors) {
-                if(error != "") {
+            for(const auto& error : errors) {
+                if(!error.empty()) {
                     SendToConsole(error);
                     noError = false;
                 }
             }
-            // SendToConsole(inputs[0] + " = " + wxString::FromCDouble(response));
-            tag.value = response;
+        }
+        else if (tag.type == IOTagType::equal) {
+            for(const auto& tagInput : m_ioTagList)
+            {
+                if(tagInput.type == IOTagType::input)
+                {
+                    // Same name as input type
+                    if(tag.name == tagInput.name)
+                    {
+                        tag.value = tagInput.value;
+                        tag.stdValue = tagInput.stdValue;
+                        tag.decimalPlaces = tagInput.decimalPlaces;
+                    }
+                }
+            }
         }
     }
-    if(pModule != NULL)
+    if(pModule != nullptr)
         Py_DECREF(pModule);
 
     return noError;
@@ -732,12 +895,30 @@ wxString MainFrame::GetHTMLFromCurrentIOs()
 
     // Set inputs and outputs in html
     for(auto tag : m_ioTagList) {
-        wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
+        wxString ioStr = "";
+        if (tag.type == IOTagType::input) ioStr = "+";
+        if (tag.type == IOTagType::output) ioStr = "-";
+        if (tag.type == IOTagType::equal) ioStr = "=";
+
         wxString strToReplace = "[[" + ioStr + tag.name + "]]";
         if(tag.type == IOTagType::input)
             htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value, tag.decimalPlaces));
-        else
-            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
+        else if (tag.type == IOTagType::output) {
+            if (tag.valueType == "double")
+            {
+                htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
+            } else if(tag.valueType == "int")
+            {
+                htmlCode.Replace(strToReplace, wxString::Format(wxT("%d"), tag.valueInt));
+            }
+            else if (tag.valueType == "str")
+            {
+                htmlCode.Replace(strToReplace, tag.valueStr);
+            }
+        }
+        else if (tag.type == IOTagType::equal) {
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.value, tag.decimalPlaces));
+        }
     }
     htmlCode.Replace("\n", "");
 
@@ -783,51 +964,113 @@ wxString MainFrame::FormatHTMLAnswers(wxString unformatedHTML)
     return formatedHTML;
 }
 
-void MainFrame::OnOpenClick(wxCommandEvent& event)
+void MainFrame::CreateNewCloze()
 {
+    wxMessageDialog dlg(this, wxT("Essa ação irá apagar todos os dados sem salvar.\nDeseja mesmo fazer isso?"),
+        wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+    if (dlg.ShowModal() == wxID_NO)
+        return;
+
+    m_filePath = "";
+    m_fileName = "";
+    m_stcPython->SetText("#Escreva o script em python aqui!\n\ndef soma(a, b):\n\treturn a + b");
+    m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
+    m_richTextCtrlConsole->Clear();
+
+    m_ioTagList.clear();
+    m_ioTagTable.clear();
+
+    m_webViewPreview->SetPage("<html><body></body></html>", "");
+    m_notebookMain->SetSelection(0);
+
+    FillTable();
+
+    SaveIsNeeded(false);
+}
+
+void MainFrame::SaveFile(const bool& saveAs)
+{
+    if (m_filePath.empty() || saveAs) {
+        wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
+            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+        if (saveFileDialog.ShowModal() == wxID_CANCEL)
+            return;
+        m_filePath = saveFileDialog.GetPath();
+        m_fileName = m_filePath.AfterLast('\\').BeforeFirst('.');
+    }
+
+    const wxString saveStr = GetStrSave();
+
+    wxTextFile file(m_filePath);
+    file.AddLine(saveStr);
+    file.Write();
+    file.Close();
+
+    SaveIsNeeded(false);
+}
+
+void MainFrame::OpenFile()
+{
+    if (m_saveIsNeeded) {
+        wxMessageDialog dlg(
+            this, wxT("Existem alterações que não foram salvas.\nDeseja realmente abrir outro arquivo sem salvar?"), wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+        if (dlg.ShowModal() == wxID_NO)
+            return;
+    }
+
     wxFileDialog openFileDialog(
         this, wxT("Abrir arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    if(openFileDialog.ShowModal() == wxID_CANCEL)
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;
 
     wxTextFile file(openFileDialog.GetPath());
     OpenFile(file);
     FormatHTML();
     m_notebookMain->SetSelection(0);
+
+    SaveIsNeeded(false);
+    m_justOpenned = true;
+}
+
+void MainFrame::ShowAbout()
+{
+    wxAboutDialogInfo info;
+    info.AddDeveloper(wxT("Thales Lima Oliveira"));
+    info.SetLicence(wxT("GPL v2"));
+    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from "
+        "www.flaticon.com\nThis application uses the WebView2 SDK"));
+    info.SetName(wxT("Gerador de questões"));
+    ::wxAboutBox(info);
+}
+
+void MainFrame::SaveIsNeeded(bool isNeeded)
+{
+    m_saveIsNeeded = isNeeded;
+    wxString title = "";
+
+    if (m_saveIsNeeded)
+        title += "*";
+
+    title += wxT("Gerador de questões");
+
+    if (!m_fileName.IsEmpty())
+        title += " - " + m_fileName;
+    
+    SetTitle(title);
+}
+
+void MainFrame::OnOpenClick(wxCommandEvent& event)
+{
+    OpenFile();
 }
 void MainFrame::OnSaveAsClick(wxCommandEvent& event)
 {
-
-    wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
-        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-    if(saveFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-    m_filePath = saveFileDialog.GetPath();
-
-    wxString saveStr = GetStrSave();
-
-    wxTextFile file(m_filePath);
-    file.AddLine(saveStr);
-    file.Write();
-    file.Close();
+    SaveFile(true);
 }
 
 void MainFrame::OnSaveClick(wxCommandEvent& event)
 {
-    if(m_filePath == "") {
-        wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
-            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-        if(saveFileDialog.ShowModal() == wxID_CANCEL)
-            return;
-        m_filePath = saveFileDialog.GetPath();
-    }
-
-    wxString saveStr = GetStrSave();
-
-    wxTextFile file(m_filePath);
-    file.AddLine(saveStr);
-    file.Write();
-    file.Close();
+    SaveFile();
 }
 
 wxString MainFrame::GetStrSave()
@@ -927,6 +1170,7 @@ void MainFrame::OpenFile(wxTextFile& file)
     FillTable();
 
     m_filePath = file.GetName();
+    m_fileName = file.GetName().AfterLast('\\').BeforeFirst('.');
 
     file.Close();
 }
@@ -968,15 +1212,9 @@ void MainFrame::FormatHTML()
 }
 void MainFrame::OAboutRibbonClick(wxRibbonButtonBarEvent& event)
 {
-    wxUnusedVar(event);
-    wxAboutDialogInfo info;
-    info.AddDeveloper(wxT("Thales Lima Oliveira"));
-    info.SetLicence(wxT("GPL v2"));
-    info.SetDescription(wxT("Gerador de questões cloze programáveis para o Moodle\nIcon made by Pixel perfect from "
-                            "www.flaticon.com\nThis application uses the WebView2 SDK"));
-    info.SetName(wxT("Gerador de questões"));
-    ::wxAboutBox(info);
+    ShowAbout();
 }
+
 void MainFrame::OnExportRibbonClick(wxRibbonButtonBarEvent& event)
 {
     ExportClose expDlg(this);
@@ -984,6 +1222,7 @@ void MainFrame::OnExportRibbonClick(wxRibbonButtonBarEvent& event)
         ExportXMLToFile(expDlg.m_numQuiz, expDlg.m_catName, expDlg.m_path);
     }
 }
+
 void MainFrame::OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
 {
     FormatHTML();
@@ -1034,8 +1273,10 @@ void MainFrame::OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
             newIOTag.type = IOTagType::input;
         else if(tagStr[0] == '-')
             newIOTag.type = IOTagType::output;
+        else if (tagStr[0] == '=')
+            newIOTag.type = IOTagType::equal;
         else {
-            SendToConsole(wxT("Erro ao analisar as tags ('+' e '-') de entradas e saídas, verifique o arquivo HTML"));
+            SendToConsole(wxT("Erro ao analisar as tags ('+', '-' e '=') de entradas e saídas, verifique o arquivo HTML"));
             return;
         }
         newIOTag.name = tagStr.Right(tagStr.Length() - 1);
@@ -1052,30 +1293,43 @@ void MainFrame::OnGetInputRibbonClick(wxRibbonButtonBarEvent& event)
 
     FillTable();
 }
+
 void MainFrame::OnOpenRibbonClick(wxRibbonButtonBarEvent& event)
 {
-    wxFileDialog openFileDialog(
-        this, wxT("Abrir arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-    if(openFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-
-    wxTextFile file(openFileDialog.GetPath());
-    OpenFile(file);
-    FormatHTML();
-    m_notebookMain->SetSelection(0);
+    OpenFile();
 }
+
 void MainFrame::OnPreviewRibbonClick(wxRibbonButtonBarEvent& event)
 {
     wxString htmlCode = m_stcHTML->GetValue();
 
     // Set inputs and outputs in html
     for(auto tag : m_ioTagList) {
-        wxString ioStr = tag.type == IOTagType::input ? "+" : "-";
+        wxString ioStr = "";
+        if (tag.type == IOTagType::input) ioStr = "+";
+        else if (tag.type == IOTagType::output) ioStr = "-";
+        else if (tag.type == IOTagType::equal) ioStr = "=";
+
         wxString strToReplace = "[[" + ioStr + tag.name + "]]";
         if(tag.type == IOTagType::input) {
             htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue, tag.decimalPlaces));
-        } else {
-            htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
+        }
+        else if (tag.type == IOTagType::output) {
+            if (tag.valueType == "double")
+            {
+                htmlCode.Replace(strToReplace, wxString::FromCDouble(tag.value));
+            }
+            else if (tag.valueType == "int")
+            {
+                htmlCode.Replace(strToReplace, wxString::Format(wxT("%d"), tag.valueInt));
+            }
+            else if (tag.valueType == "str")
+            {
+                htmlCode.Replace(strToReplace, tag.valueStr);
+            }
+        }
+        else if (tag.type == IOTagType::equal) {
+            htmlCode.Replace(strToReplace, wxString::FromDouble(tag.stdValue, tag.decimalPlaces));
         }
     }
     htmlCode = FormatHTMLAnswers(htmlCode);
@@ -1130,80 +1384,47 @@ void MainFrame::OnRunPyRibbonClick(wxRibbonButtonBarEvent& event)
 }
 void MainFrame::OnSaveAsRibbonClick(wxRibbonButtonBarEvent& event)
 {
-    wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
-        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-    if(saveFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-    m_filePath = saveFileDialog.GetPath();
-
-    wxString saveStr = GetStrSave();
-
-    wxTextFile file(m_filePath);
-    file.AddLine(saveStr);
-    file.Write();
-    file.Close();
+    SaveFile(true);
 }
 void MainFrame::OnSaveRibbonClick(wxRibbonButtonBarEvent& event)
 {
-    if(m_filePath == "") {
-        wxFileDialog saveFileDialog(this, wxT("Salvar arquivo ANTHA"), "", "", "Arquivo ANTHA (*.antha)|*.antha",
-            wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-        if(saveFileDialog.ShowModal() == wxID_CANCEL)
-            return;
-        m_filePath = saveFileDialog.GetPath();
-    }
-
-    wxString saveStr = GetStrSave();
-
-    wxTextFile file(m_filePath);
-    file.AddLine(saveStr);
-    file.Write();
-    file.Close();
+    SaveFile();
 }
 void MainFrame::OnWindowClose(wxCloseEvent& event)
 {
+    if (!m_saveIsNeeded) {
+        event.Skip();
+        return;
+    }
     wxMessageDialog dlg(
-        this, wxT("Deseja realmente sair sem salvar?"), wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
+        this, wxT("Existem alterações que não foram salvas.\nDeseja realmente sair sem salvar?"), wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
     if(dlg.ShowModal() != wxID_NO)
         event.Skip();
 }
 void MainFrame::OnNewClick(wxCommandEvent& event)
 {
-    wxMessageDialog dlg(this, wxT("Essa ação irá apagar todos os dados sem salvar.\nDeseja mesmo fazer isso?"),
-        wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
-    if(dlg.ShowModal() == wxID_NO)
-        return;
-
-    m_filePath = "";
-    m_stcPython->SetText("#Escreva o script em python aqui!\n\ndef soma(a, b):\n\treturn a + b");
-    m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
-    m_richTextCtrlConsole->Clear();
-
-    m_ioTagList.clear();
-    m_ioTagTable.clear();
-
-    m_webViewPreview->SetPage("<html><body></body></html>", "");
-    m_notebookMain->SetSelection(0);
-
-    FillTable();
+    CreateNewCloze();
 }
 void MainFrame::OnNewRibbonClick(wxRibbonButtonBarEvent& event)
 {
-    wxMessageDialog dlg(this, wxT("Essa ação irá apagar todos os dados sem salvar.\nDeseja mesmo fazer isso?"),
-        wxT("Atenção!"), wxYES_NO | wxICON_WARNING | wxCENTRE);
-    if(dlg.ShowModal() == wxID_NO)
-        return;
+    CreateNewCloze();
+}
+void MainFrame::OnSTCHTMLChanged(wxStyledTextEvent& event)
+{
+    if (!m_saveIsNeeded && !m_justOpenned)
+        SaveIsNeeded();
 
-    m_filePath = "";
-    m_stcPython->SetText("#Escreva o script em python aqui!\n\ndef soma(a, b):\n\treturn a + b");
-    m_stcHTML->SetText("<!-- Cole o HTML do Moodle aqui! -->\n[[+t1]] + [[+t2]] = [[-soma t1 t2]]");
-    m_richTextCtrlConsole->Clear();
+    event.Skip();
+}
+void MainFrame::OnSTCPythonChanged(wxStyledTextEvent& event)
+{
+    if (!m_saveIsNeeded && !m_justOpenned)
+        SaveIsNeeded();
 
-    m_ioTagList.clear();
-    m_ioTagTable.clear();
-
-    m_webViewPreview->SetPage("<html><body></body></html>", "");
-    m_notebookMain->SetSelection(0);
-
-    FillTable();
+    event.Skip();
+}
+void MainFrame::OnMainFrameIdle(wxIdleEvent& event)
+{
+    if (m_justOpenned) m_justOpenned = false;
+    event.Skip();
 }
